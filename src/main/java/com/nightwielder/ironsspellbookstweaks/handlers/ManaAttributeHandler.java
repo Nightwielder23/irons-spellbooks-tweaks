@@ -10,7 +10,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Adjusts base values of Iron's MANA_REGEN, MAX_MANA, and COOLDOWN_REDUCTION attributes on the player entity type. All three share the same event so they live in one handler.
+// Adjusts base values of Iron's mana and spell timing attributes on the player entity type. All four hook the same event so they live in one handler.
 public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
@@ -23,6 +23,7 @@ public class ManaAttributeHandler {
         applyManaRegenOverride(event);
         applyMaxManaOverride(event);
         applyCooldownReductionBonus(event);
+        applyCastTimeReductionBonus(event);
     }
 
     private static void applyManaRegenOverride(EntityAttributeModificationEvent event) {
@@ -65,5 +66,19 @@ public class ManaAttributeHandler {
         }
         event.add(EntityType.PLAYER, cooldownReductionAttribute.get(), configuredValue);
         logger.info("applied cooldownReductionBonus: {}", configuredValue);
+    }
+
+    private static void applyCastTimeReductionBonus(EntityAttributeModificationEvent event) {
+        double configuredValue = Config.CAST_TIME_REDUCTION_BONUS.get();
+        if (configuredValue == 0.0) {
+            return;
+        }
+        Optional<Attribute> castTimeReductionAttribute = IronsSpellbooksCompat.getCastTimeReductionAttribute();
+        if (castTimeReductionAttribute.isEmpty()) {
+            logger.warn("CAST_TIME_REDUCTION attribute not registered, skipping castTimeReductionBonus");
+            return;
+        }
+        event.add(EntityType.PLAYER, castTimeReductionAttribute.get(), configuredValue);
+        logger.info("applied castTimeReductionBonus: {}", configuredValue);
     }
 }

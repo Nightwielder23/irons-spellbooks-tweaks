@@ -26,4 +26,8 @@ public class IronsSpellbooksCompat {
     public static Optional<Attribute> getCooldownReductionAttribute() {
         return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "cooldown_reduction")));
     }
+
+    public static Optional<Attribute> getCastTimeReductionAttribute() {
+        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "cast_time_reduction")));
+    }
 }

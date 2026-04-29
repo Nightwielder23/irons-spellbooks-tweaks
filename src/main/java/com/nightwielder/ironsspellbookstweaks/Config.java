@@ -8,6 +8,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue BASE_MANA_REGEN_PERCENT;
     public static final ForgeConfigSpec.IntValue STARTING_MAX_MANA;
     public static final ForgeConfigSpec.DoubleValue COOLDOWN_REDUCTION_BONUS;
+    public static final ForgeConfigSpec.DoubleValue CAST_TIME_REDUCTION_BONUS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_MANA_REGEN_ENTIRELY;
 
     static {
@@ -27,6 +28,9 @@ public class Config {
         COOLDOWN_REDUCTION_BONUS = builder
                 .comment("Additive bonus applied to the COOLDOWN_REDUCTION attribute for every player. Around 0.5 cuts cooldowns roughly in half. Negative values lengthen them. Stacks with gear and effects.")
                 .defineInRange("cooldownReductionBonus", 0.0, -10.0, 10.0);
+        CAST_TIME_REDUCTION_BONUS = builder
+                .comment("Additive bonus applied to the CAST_TIME_REDUCTION attribute for every player. Around 0.5 makes spells cast roughly twice as fast. Negative values lengthen cast times. Stacks with gear and effects.")
+                .defineInRange("castTimeReductionBonus", 0.0, -10.0, 10.0);
         builder.pop();
         SERVER_SPEC = builder.build();
     }
