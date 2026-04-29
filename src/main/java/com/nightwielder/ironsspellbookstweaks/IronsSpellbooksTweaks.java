@@ -1,7 +1,6 @@
 package com.nightwielder.ironsspellbookstweaks;
 
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
-import com.nightwielder.ironsspellbookstweaks.handlers.StartingManaHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,7 +22,6 @@ public class IronsSpellbooksTweaks {
     public IronsSpellbooksTweaks() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.register(ManaAttributeHandler.class);
-        MinecraftForge.EVENT_BUS.register(StartingManaHandler.class);
         MinecraftForge.EVENT_BUS.register(ManaRegenCancelHandler.class);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
         logger.info("Iron's Spellbooks Tweaks loaded");

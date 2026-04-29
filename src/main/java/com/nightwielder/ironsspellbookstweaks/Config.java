@@ -5,7 +5,6 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class Config {
 
     public static final ForgeConfigSpec SERVER_SPEC;
-    public static final ForgeConfigSpec.DoubleValue BASE_MANA_REGEN_FLAT;
     public static final ForgeConfigSpec.DoubleValue BASE_MANA_REGEN_PERCENT;
     public static final ForgeConfigSpec.IntValue STARTING_MAX_MANA;
     public static final ForgeConfigSpec.DoubleValue COOLDOWN_REDUCTION_BONUS;
@@ -14,14 +13,11 @@ public class Config {
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         builder.push("mana");
-        BASE_MANA_REGEN_FLAT = builder
-                .comment("Flat mana per regen tick. Set to -1 to leave Iron's default alone. Takes priority over baseManaRegenPercent if both are set above -1. Iron's regen tick interval is 10 game ticks.")
-                .defineInRange("baseManaRegenFlat", -1.0, -1.0, 1000.0);
         BASE_MANA_REGEN_PERCENT = builder
-                .comment("Base MANA_REGEN attribute value as a percent of max mana per regen tick. Set to -1 to leave alone. Iron's vanilla default is around 1.0.")
+                .comment("Base MANA_REGEN attribute value as a percent of max mana per regen tick. Set to -1 to leave Iron's default alone. Iron's vanilla default is around 1.0. Iron's regen ticks every 10 game ticks.")
                 .defineInRange("baseManaRegenPercent", -1.0, -1.0, 100.0);
         STARTING_MAX_MANA = builder
-                .comment("Max mana value for new players on first join. Set to -1 to leave alone. Iron's vanilla default is 100.")
+                .comment("Base MAX_MANA attribute value for the player entity type. Applies to existing and new players on next login. Set to -1 to leave Iron's default alone. Iron's vanilla default is 100.")
                 .defineInRange("startingMaxMana", -1, -1, 100000);
         DISABLE_MANA_REGEN_ENTIRELY = builder
                 .comment("Fully disable passive mana regen. Implemented as a tick drainback because Iron's regen path does not fire a cancellable event.")
