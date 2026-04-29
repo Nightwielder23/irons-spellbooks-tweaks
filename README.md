@@ -8,11 +8,11 @@ Soft dependency, no mixins, no access transformers. The mod loads cleanly withou
 
 Iron's Spellbooks ships with `MANA_REGEN_MULTIPLIER`, `MANA_SPAWN_PERCENT`, and a few sword-related knobs in its serverconfig. There are several open issues asking for more direct control over mana regen, starting mana, and cooldowns ([#161](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/161), [#162](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/162), [#391](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/391)) that haven't been addressed.
 
-This mod fills those gaps without touching Iron's serverconfig (which has known multiplayer sync bugs per [#1033](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/1033)). Settings live in their own TOML at `config/irons_spellbooks_tweaks-server.toml` and apply via attribute modifications and runtime hooks.
+This mod fills those gaps without touching Iron's serverconfig (which has known multiplayer sync bugs per [#1033](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/1033)). Settings live in their own TOML at `config/irons_spellbooks_tweaks-server.toml` and apply via attribute modifications and runtime hooks on Iron's public events.
 
 ## Config
 
-All settings are server-side. Use `-1` (or `false` for booleans) to disable any individual override.
+All settings are server-side. Use `-1` (or `false` / empty list) to disable any individual override.
 
 ### `[mana]`
 
@@ -30,12 +30,34 @@ Fully disables passive mana regen. Implemented as a per-tick drainback because I
 **`cooldownReductionBonus`** (default `0.0`, range `-10.0` to `10.0`)
 Additive bonus applied to the `COOLDOWN_REDUCTION` attribute for every player. Around `0.5` cuts cooldowns roughly in half. Negative values lengthen them. Stacks with gear and effects.
 
+**`castTimeReductionBonus`** (default `0.0`, range `-10.0` to `10.0`)
+Additive bonus applied to the `CAST_TIME_REDUCTION` attribute for every player. Around `0.5` makes spells cast roughly twice as fast. Negative values lengthen cast times. Stacks with gear and effects.
+
+### `[restrictions]`
+
+**`spellCastingDisabledDimensions`** (default empty list)
+Dimensions where players cannot cast spells. Use full namespaced dimension IDs as strings:
+```toml
+spellCastingDisabledDimensions = ["minecraft:nether", "twilightforest:twilight_forest"]
+```
+Mob casters are not affected. Iron's wizards and bosses still cast normally in blocked dimensions.
+
+**`maxSpellLevelGlobal`** (default `-1`, range `-1` to `100`)
+Hard cap on the level any player-cast spell can fire at. Higher levels still consume scroll/spellbook slots normally, they just cap at the configured ceiling when cast. Mob casters bypass this so Iron's wizards and bosses keep their full power.
+
+**`inscriptionBlacklist`** (default empty list)
+Spell IDs that cannot be inscribed at the inscription table. Use full namespaced spell IDs:
+```toml
+inscriptionBlacklist = ["irons_spellbooks:fireball", "irons_spellbooks:fire_breath"]
+```
+Players attempting to inscribe a blacklisted spell will see the action cancelled silently.
+
 ## Compatibility
 
 - Minecraft 1.20.1 Forge only (1.20.1 is the supported branch of Iron's Spellbooks at time of writing)
 - Iron's Spells 'n Spellbooks 3.0.0 or later
 - Forge 47.2.0 or later
-- No conflicts expected with other Iron's addons. The mod hooks `EntityAttributeModificationEvent` for three of its features and `PlayerTickEvent` for the regen disable, neither of which other addons compete for in destructive ways.
+- No conflicts expected with other Iron's addons. The mod hooks `EntityAttributeModificationEvent`, `SpellPreCastEvent`, `ModifySpellLevelEvent`, `InscribeSpellEvent`, and `PlayerTickEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 
