@@ -3,30 +3,40 @@ package com.nightwielder.ironsspellbookstweaks.handlers;
 import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.util.Optional;
-import net.minecraft.world.entity.EntityType;
+import java.util.UUID;
 import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Adjusts base values of Iron's mana and spell timing attributes on the player entity type. All four hook the same event so they live in one handler.
+// Applies configured attribute overrides to players on login. Runs on the Forge bus because per-world server configs are not loaded until after mod-bus events fire.
 public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
+    // Stable UUIDs let us replace our own modifiers on relogin instead of stacking duplicates.
+    private static final UUID MANA_REGEN_MODIFIER_ID = UUID.fromString("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f");
+    private static final UUID MAX_MANA_MODIFIER_ID = UUID.fromString("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70");
+    private static final UUID COOLDOWN_REDUCTION_MODIFIER_ID = UUID.fromString("5f4cad30-7061-6132-1e4f-3c4d5e6f7081");
+    private static final UUID CAST_TIME_REDUCTION_MODIFIER_ID = UUID.fromString("60c5be41-8172-7243-2f50-4d5e6f708192");
+
     @SubscribeEvent
-    public static void onAttributeModification(EntityAttributeModificationEvent event) {
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        applyManaRegenOverride(event);
-        applyMaxManaOverride(event);
-        applyCooldownReductionBonus(event);
-        applyCastTimeReductionBonus(event);
+        Player player = event.getEntity();
+        applyManaRegenOverride(player);
+        applyMaxManaOverride(player);
+        applyCooldownReductionBonus(player);
+        applyCastTimeReductionBonus(player);
     }
 
-    private static void applyManaRegenOverride(EntityAttributeModificationEvent event) {
+    private static void applyManaRegenOverride(Player player) {
         double configuredValue = Config.BASE_MANA_REGEN_PERCENT.get();
         if (configuredValue < 0) {
             return;
@@ -36,11 +46,11 @@ public class ManaAttributeHandler {
             logger.warn("MANA_REGEN attribute not registered, skipping baseManaRegenPercent override");
             return;
         }
-        event.add(EntityType.PLAYER, manaRegenAttribute.get(), configuredValue);
-        logger.info("applied baseManaRegenPercent override: {}", configuredValue);
+        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_MODIFIER_ID, "ist_mana_regen_override", configuredValue);
+        logger.info("applied baseManaRegenPercent override to {}: {}", player.getName().getString(), configuredValue);
     }
 
-    private static void applyMaxManaOverride(EntityAttributeModificationEvent event) {
+    private static void applyMaxManaOverride(Player player) {
         int configuredValue = Config.STARTING_MAX_MANA.get();
         if (configuredValue < 0) {
             return;
@@ -50,11 +60,11 @@ public class ManaAttributeHandler {
             logger.warn("MAX_MANA attribute not registered, skipping startingMaxMana override");
             return;
         }
-        event.add(EntityType.PLAYER, maxManaAttribute.get(), configuredValue);
-        logger.info("applied startingMaxMana override: {}", configuredValue);
+        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_MODIFIER_ID, "ist_max_mana_override", configuredValue);
+        logger.info("applied startingMaxMana override to {}: {}", player.getName().getString(), configuredValue);
     }
 
-    private static void applyCooldownReductionBonus(EntityAttributeModificationEvent event) {
+    private static void applyCooldownReductionBonus(Player player) {
         double configuredValue = Config.COOLDOWN_REDUCTION_BONUS.get();
         if (configuredValue == 0.0) {
             return;
@@ -64,11 +74,11 @@ public class ManaAttributeHandler {
             logger.warn("COOLDOWN_REDUCTION attribute not registered, skipping cooldownReductionBonus");
             return;
         }
-        event.add(EntityType.PLAYER, cooldownReductionAttribute.get(), configuredValue);
-        logger.info("applied cooldownReductionBonus: {}", configuredValue);
+        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_MODIFIER_ID, "ist_cooldown_reduction_bonus", configuredValue);
+        logger.info("applied cooldownReductionBonus to {}: {}", player.getName().getString(), configuredValue);
     }
 
-    private static void applyCastTimeReductionBonus(EntityAttributeModificationEvent event) {
+    private static void applyCastTimeReductionBonus(Player player) {
         double configuredValue = Config.CAST_TIME_REDUCTION_BONUS.get();
         if (configuredValue == 0.0) {
             return;
@@ -78,7 +88,21 @@ public class ManaAttributeHandler {
             logger.warn("CAST_TIME_REDUCTION attribute not registered, skipping castTimeReductionBonus");
             return;
         }
-        event.add(EntityType.PLAYER, castTimeReductionAttribute.get(), configuredValue);
-        logger.info("applied castTimeReductionBonus: {}", configuredValue);
+        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_MODIFIER_ID, "ist_cast_time_reduction_bonus", configuredValue);
+        logger.info("applied castTimeReductionBonus to {}: {}", player.getName().getString(), configuredValue);
+    }
+
+    private static void applyAdditiveOverride(Player player, Attribute attribute, UUID modifierId, String modifierName, double value) {
+        AttributeInstance instance = player.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        // remove any prior version of our modifier so changing the config + re-logging in actually updates the value
+        AttributeModifier existing = instance.getModifier(modifierId);
+        if (existing != null) {
+            instance.removeModifier(modifierId);
+        }
+        AttributeModifier modifier = new AttributeModifier(modifierId, modifierName, value, AttributeModifier.Operation.ADDITION);
+        instance.addPermanentModifier(modifier);
     }
 }

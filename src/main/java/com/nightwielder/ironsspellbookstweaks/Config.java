@@ -10,7 +10,7 @@ public class Config {
     public static final ForgeConfigSpec.IntValue STARTING_MAX_MANA;
     public static final ForgeConfigSpec.DoubleValue COOLDOWN_REDUCTION_BONUS;
     public static final ForgeConfigSpec.DoubleValue CAST_TIME_REDUCTION_BONUS;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_MANA_REGEN_ENTIRELY;
+    public static final ForgeConfigSpec.BooleanValue DISABLE_MANA_REGEN;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SPELL_CASTING_DISABLED_DIMENSIONS;
     public static final ForgeConfigSpec.IntValue MAX_SPELL_LEVEL_GLOBAL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
@@ -19,14 +19,14 @@ public class Config {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         builder.push("mana");
         BASE_MANA_REGEN_PERCENT = builder
-                .comment("Base MANA_REGEN attribute value as a percent of max mana per regen tick. Set to -1 to leave Iron's default alone. Iron's vanilla default is around 1.0. Iron's regen ticks every 10 game ticks.")
+                .comment("Bonus added to the player's MANA_REGEN attribute on every login. Stacks as a flat addition. Set to -1 to disable. Iron's vanilla default is around 1.0, so a value of 4.0 here gives an effective regen rate of 5.0.")
                 .defineInRange("baseManaRegenPercent", -1.0, -1.0, 100.0);
         STARTING_MAX_MANA = builder
-                .comment("Base MAX_MANA attribute value for the player entity type. Applies to existing and new players on next login. Set to -1 to leave Iron's default alone. Iron's vanilla default is 100.")
+                .comment("Bonus added to the player's MAX_MANA attribute on every login. Stacks with the value as a flat addition. Set to -1 to disable. Iron's vanilla default is 100, so a value of 400 here gives players 500 max mana total.")
                 .defineInRange("startingMaxMana", -1, -1, 100000);
-        DISABLE_MANA_REGEN_ENTIRELY = builder
+        DISABLE_MANA_REGEN = builder
                 .comment("Fully disable passive mana regen. Implemented as a tick drainback because Iron's regen path does not fire a cancellable event.")
-                .define("disableManaRegenEntirely", false);
+                .define("disableManaRegen", false);
         builder.pop();
         builder.push("cooldown");
         COOLDOWN_REDUCTION_BONUS = builder

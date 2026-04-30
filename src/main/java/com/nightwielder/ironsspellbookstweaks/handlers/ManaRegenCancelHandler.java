@@ -12,11 +12,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Drainback for disableManaRegenEntirely. Iron's regen does not fire a cancellable event so we sample mana per tick and undo any positive delta. Reflection-bound to MagicData on first use.
+// Drainback for disableManaRegen. Iron's regen does not fire a cancellable event so we sample mana per tick and undo any positive delta. Reflection-bound to MagicData on first use.
 public class ManaRegenCancelHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaRegenCancelHandler");
-    private static final String MAGIC_DATA_CLASS = "io.redspace.ironsspellbooks.capabilities.magic.MagicData";
+    private static final String MAGIC_DATA_CLASS = "io.redspace.ironsspellbooks.api.magic.MagicData";
 
     private static final Map<UUID, Float> lastKnownMana = new HashMap<>();
     private static boolean reflectionAvailable = true;
@@ -37,7 +37,7 @@ public class ManaRegenCancelHandler {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        if (!Config.DISABLE_MANA_REGEN_ENTIRELY.get()) {
+        if (!Config.DISABLE_MANA_REGEN.get()) {
             // clear cache when feature is off so a re-enable starts fresh
             if (!lastKnownMana.isEmpty()) {
                 lastKnownMana.clear();
@@ -66,7 +66,7 @@ public class ManaRegenCancelHandler {
             getManaMethod = magicDataClass.getMethod("getMana");
             setManaMethod = magicDataClass.getMethod("setMana", float.class);
         } catch (Exception lookupFailed) {
-            logger.warn("could not bind to Iron's MagicData reflection, disableManaRegenEntirely will no-op", lookupFailed);
+            logger.warn("could not bind to Iron's MagicData reflection, disableManaRegen will no-op", lookupFailed);
             reflectionAvailable = false;
         }
     }
