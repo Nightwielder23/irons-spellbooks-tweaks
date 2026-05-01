@@ -1,6 +1,6 @@
 # Iron's Spellbooks Tweaks
 
-Config tweaks for [Iron's Spells 'n Spellbooks](https://www.curseforge.com/minecraft/mc-mods/irons-spells-n-spellbooks) aimed at modpack makers. Adds TOML knobs that Iron's hasn't shipped yet.
+Config tweaks for [Iron's Spells 'n Spellbooks](https://www.curseforge.com/minecraft/mc-mods/irons-spells-n-spellbooks) aimed at modpack makers. Adds TOML knobs Iron's doesn't expose.
 
 Soft dependency, no mixins, no access transformers. The mod loads cleanly without Iron's Spellbooks present and does nothing in that case.
 
@@ -43,7 +43,11 @@ spellCastingDisabledDimensions = ["minecraft:nether", "twilightforest:twilight_f
 Mob casters are not affected. Iron's wizards and bosses still cast normally in blocked dimensions.
 
 **`maxSpellRarity`** (default empty)
-Highest spell rarity players are allowed to cast. Spells with a higher minimum rarity are blocked. Valid values: `common`, `uncommon`, `rare`, `epic`, `legendary`, or empty to disable. For example, `"uncommon"` allows common and uncommon spells but blocks rare, epic, and legendary. `"legendary"` allows everything. Mob casters are not affected.
+Highest spell rarity players are allowed to cast. Spells with a higher minimum rarity are blocked. Valid values: `common`, `uncommon`, `rare`, `epic`, `legendary`, or empty to disable:
+```toml
+maxSpellRarity = "uncommon"
+```
+The example above allows common and uncommon spells but blocks rare, epic, and legendary. Setting it to `"legendary"` allows everything. Mob casters are not affected, so Iron's wizards and bosses cast at full strength regardless.
 
 **`inscriptionBlacklist`** (default empty list)
 Spell IDs that cannot be inscribed at the inscription table. Use full namespaced spell IDs:
@@ -67,20 +71,20 @@ v1.1 adds a datapack-driven unlock system that lets you gate Iron's features beh
 
 ### Triggers
 
-**`advancement`** — fires when a player earns a specific advancement. Retroactively scans on login so existing players get unlocks they qualify for.
+**`advancement`**: fires when a player earns a specific advancement. Retroactively scans on login so existing players get unlocks they qualify for.
 
-**`entity_kill`** — fires when a player kills an entity matching the given type ID. Useful for mods that don't ship boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't tracked.
+**`entity_kill`**: fires when a player kills an entity matching the given type ID. Useful for mods that don't ship boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't tracked.
 
 ### Grants
 
 Each unlock can grant any combination of:
-- `rarity_cap` — raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with `maxSpellRarity` config, the effective ceiling is whichever is looser. Raise-only, a later unlock can never tighten an earlier loosening.
-- `cooldown_reduction_bonus` — add to the player's cooldown reduction attribute
-- `cast_time_reduction_bonus` — add to the player's cast time reduction attribute
-- `remove_dimensions` — exempt the player from the casting dimension blacklist for these dimensions
-- `remove_inscriptions` — exempt the player from the inscription blacklist for these spells
+- `rarity_cap`: raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with `maxSpellRarity` config, the effective ceiling is whichever is looser. Raise-only, a later unlock can never tighten an earlier loosening.
+- `cooldown_reduction_bonus`: add to the player's cooldown reduction attribute
+- `cast_time_reduction_bonus`: add to the player's cast time reduction attribute
+- `remove_dimensions`: exempt the player from the casting dimension blacklist for these dimensions
+- `remove_inscriptions`: exempt the player from the inscription blacklist for these spells
 
-### Example
+### Examples
 
 Lock fireball behind killing the Dead King. In your pack's datapack at `data/mypack/isstweaks/unlocks/fireball_unlock.json`:
 
@@ -93,27 +97,44 @@ Lock fireball behind killing the Dead King. In your pack's datapack at `data/myp
   "grants": {
     "remove_inscriptions": ["irons_spellbooks:fireball"]
   },
-  "message": "You've earned the right to inscribe Fireball."
+  "message": "Fireball unlocked."
 }
 ```
 
 Combined with `inscriptionBlacklist = ["irons_spellbooks:fireball"]` in the server config, fireball is un-inscribable until the player kills the Dead King.
 
+Tier-up the player's spell ceiling on a boss kill. With `maxSpellRarity = "rare"` set globally, players start capped at rare. Killing the Fire Boss raises that player's personal ceiling to epic:
+
+```json
+{
+  "trigger": {
+    "type": "entity_kill",
+    "id": "irons_spellbooks:fire_boss"
+  },
+  "grants": {
+    "rarity_cap": "epic"
+  },
+  "message": "Epic spells unlocked."
+}
+```
+
+The grant is raise-only, so a later unlock that tries to set `rarity_cap` to `uncommon` would be ignored.
+
 ### Admin command
 
-- `/isstweaks unlock <player> <unlock_id>` — grant an unlock manually
-- `/isstweaks revoke <player> <unlock_id>` — remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
-- `/isstweaks status <player>` — show the player's current progress
-- `/isstweaks reset <player>` — wipe all progression data for the player
+- `/isstweaks unlock <player> <unlock_id>`: grant an unlock manually
+- `/isstweaks revoke <player> <unlock_id>`: remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
+- `/isstweaks status <player>`: show the player's current progress
+- `/isstweaks reset <player>`: wipe all progression data for the player
 
 All subcommands require permission level 2.
 
 ## Compatibility
 
-- Minecraft 1.20.1 Forge only (1.20.1 is the supported branch of Iron's Spellbooks at time of writing)
+- Minecraft 1.20.1 Forge only (1.20.1 is the only currently-maintained branch of Iron's Spellbooks)
 - Iron's Spells 'n Spellbooks 3.0.0 or later
 - Forge 47.2.0 or later
-- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `ModifySpellLevelEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
+- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, `AttachCapabilitiesEvent`, `PlayerEvent.Clone`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 
