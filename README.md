@@ -52,16 +52,74 @@ inscriptionBlacklist = ["irons_spellbooks:fireball", "irons_spellbooks:fire_brea
 ```
 Players attempting to inscribe a blacklisted spell will see the action cancelled silently.
 
+### `[blackhole]`
+
+**`blackholeImmunity`** (default empty list)
+Per-entity-type resistance to black hole pull. Format `"entity_id:strength"` where strength is `0.0` (no effect) to `1.0` (fully immune):
+```toml
+blackholeImmunity = ["irons_spellbooks:dead_king:1.0", "minecraft:wither:0.8"]
+```
+Iron's hardcodes a 30% minimum pull regardless of `KNOCKBACK_RESISTANCE` attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.
+
+## Per-Player Progression Unlocks
+
+v1.1 adds a datapack-driven unlock system that lets you gate Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
+
+### Triggers
+
+**`advancement`** — fires when a player earns a specific advancement. Retroactively scans on login so existing players get unlocks they qualify for.
+
+**`entity_kill`** — fires when a player kills an entity matching the given type ID. Useful for mods that don't ship boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't tracked.
+
+### Grants
+
+Each unlock can grant any combination of:
+- `spell_level_cap` — raise the player's spell level cap (raise-only, never lowers)
+- `cooldown_reduction_bonus` — add to the player's cooldown reduction attribute
+- `cast_time_reduction_bonus` — add to the player's cast time reduction attribute
+- `remove_dimensions` — exempt the player from the casting dimension blacklist for these dimensions
+- `remove_inscriptions` — exempt the player from the inscription blacklist for these spells
+
+### Example
+
+Lock fireball behind killing the Dead King. In your pack's datapack at `data/mypack/isstweaks/unlocks/fireball_unlock.json`:
+
+```json
+{
+  "trigger": {
+    "type": "entity_kill",
+    "id": "irons_spellbooks:dead_king"
+  },
+  "grants": {
+    "remove_inscriptions": ["irons_spellbooks:fireball"]
+  },
+  "message": "You've earned the right to inscribe Fireball."
+}
+```
+
+Combined with `inscriptionBlacklist = ["irons_spellbooks:fireball"]` in the server config, fireball is un-inscribable until the player kills the Dead King.
+
+### Admin command
+
+- `/isstweaks unlock <player> <unlock_id>` — grant an unlock manually
+- `/isstweaks revoke <player> <unlock_id>` — remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
+- `/isstweaks status <player>` — show the player's current progress
+- `/isstweaks reset <player>` — wipe all progression data for the player
+
+All subcommands require permission level 2.
+
 ## Compatibility
 
 - Minecraft 1.20.1 Forge only (1.20.1 is the supported branch of Iron's Spellbooks at time of writing)
 - Iron's Spells 'n Spellbooks 3.0.0 or later
 - Forge 47.2.0 or later
-- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `ModifySpellLevelEvent`, `InscribeSpellEvent`, and `PlayerTickEvent`. None of these are commonly competed for in destructive ways.
+- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `ModifySpellLevelEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 
 Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All knobs are server-side so clients don't need matching configs.
+
+Note: progression data is per-world and stored on the player's NBT capability. It survives death and login/logout. Datapack unlock JSONs reload via `/reload`.
 
 ## License
 
