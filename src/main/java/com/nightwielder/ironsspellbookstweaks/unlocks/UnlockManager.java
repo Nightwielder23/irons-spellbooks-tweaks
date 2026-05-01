@@ -26,6 +26,7 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
     // volatile + Map.copyOf gives lock-free atomic swap on reload, reads stay unsynchronized
     private static volatile Map<ResourceLocation, UnlockDefinition> unlocks = Map.of();
     private static volatile Map<ResourceLocation, List<UnlockDefinition>> byAdvancement = Map.of();
+    private static volatile Map<ResourceLocation, List<UnlockDefinition>> byEntityKill = Map.of();
 
     public UnlockManager() {
         super(GSON, DIRECTORY);
@@ -35,6 +36,7 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
     protected void apply(Map<ResourceLocation, JsonElement> entries, ResourceManager resourceManager, ProfilerFiller profiler) {
         Map<ResourceLocation, UnlockDefinition> parsed = new HashMap<>();
         Map<ResourceLocation, List<UnlockDefinition>> advancementIndex = new HashMap<>();
+        Map<ResourceLocation, List<UnlockDefinition>> entityKillIndex = new HashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : entries.entrySet()) {
             ResourceLocation id = entry.getKey();
             JsonElement element = entry.getValue();
@@ -48,17 +50,25 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
                 if (definition.getTrigger() instanceof AdvancementTrigger advancementTrigger) {
                     advancementIndex.computeIfAbsent(advancementTrigger.advancementId(), k -> new ArrayList<>()).add(definition);
                 }
+                if (definition.getTrigger() instanceof EntityKillTrigger entityKillTrigger) {
+                    entityKillIndex.computeIfAbsent(entityKillTrigger.entityTypeId(), k -> new ArrayList<>()).add(definition);
+                }
             } catch (JsonParseException parseFailed) {
                 logger.warn("failed to parse unlock {}: {}", id, parseFailed.getMessage());
             }
         }
-        Map<ResourceLocation, List<UnlockDefinition>> frozenIndex = new HashMap<>();
-        for (Map.Entry<ResourceLocation, List<UnlockDefinition>> indexed : advancementIndex.entrySet()) {
-            frozenIndex.put(indexed.getKey(), List.copyOf(indexed.getValue()));
-        }
         unlocks = Map.copyOf(parsed);
-        byAdvancement = Map.copyOf(frozenIndex);
-        logger.info("loaded {} unlocks ({} advancement-triggered)", unlocks.size(), byAdvancement.size());
+        byAdvancement = freezeIndex(advancementIndex);
+        byEntityKill = freezeIndex(entityKillIndex);
+        logger.info("loaded {} unlocks ({} advancement-triggered, {} entity-kill-triggered)", unlocks.size(), byAdvancement.size(), byEntityKill.size());
+    }
+
+    private static Map<ResourceLocation, List<UnlockDefinition>> freezeIndex(Map<ResourceLocation, List<UnlockDefinition>> mutable) {
+        Map<ResourceLocation, List<UnlockDefinition>> frozen = new HashMap<>();
+        for (Map.Entry<ResourceLocation, List<UnlockDefinition>> indexed : mutable.entrySet()) {
+            frozen.put(indexed.getKey(), List.copyOf(indexed.getValue()));
+        }
+        return Map.copyOf(frozen);
     }
 
     public static Map<ResourceLocation, UnlockDefinition> getAll() {
@@ -67,6 +77,10 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
 
     public static List<UnlockDefinition> getByAdvancement(ResourceLocation advancementId) {
         return byAdvancement.getOrDefault(advancementId, List.of());
+    }
+
+    public static List<UnlockDefinition> getByEntityKill(ResourceLocation entityTypeId) {
+        return byEntityKill.getOrDefault(entityTypeId, List.of());
     }
 
     public static Optional<UnlockDefinition> getById(ResourceLocation unlockId) {

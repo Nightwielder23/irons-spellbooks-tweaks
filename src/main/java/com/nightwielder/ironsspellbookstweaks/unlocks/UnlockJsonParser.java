@@ -42,6 +42,9 @@ public final class UnlockJsonParser {
         if ("advancement".equals(triggerType)) {
             return parseAdvancementTrigger(unlockId, triggerJson);
         }
+        if ("entity_kill".equals(triggerType)) {
+            return parseEntityKillTrigger(unlockId, triggerJson);
+        }
         throw new JsonParseException("unlock " + unlockId + " has unknown trigger type '" + triggerType + "'");
     }
 
@@ -55,6 +58,18 @@ public final class UnlockJsonParser {
             throw new JsonParseException("unlock " + unlockId + " advancement trigger has invalid id '" + rawId + "'");
         }
         return new AdvancementTrigger(advancementId);
+    }
+
+    private static EntityKillTrigger parseEntityKillTrigger(ResourceLocation unlockId, JsonObject triggerJson) {
+        if (!triggerJson.has("id") || !triggerJson.get("id").isJsonPrimitive()) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill trigger missing required string 'id'");
+        }
+        String rawId = triggerJson.get("id").getAsString();
+        ResourceLocation entityTypeId = ResourceLocation.tryParse(rawId);
+        if (entityTypeId == null) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill trigger has invalid entity type id '" + rawId + "'");
+        }
+        return new EntityKillTrigger(entityTypeId);
     }
 
     private static UnlockGrants parseGrants(ResourceLocation unlockId, JsonObject json) {
