@@ -5,8 +5,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
-import io.redspace.ironsspellbooks.api.spells.SpellRarity;
+import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -96,12 +95,12 @@ public final class UnlockJsonParser {
                 : 0.0;
         Set<ResourceLocation> dimensionsRemoved = parseIdList(unlockId, grantsJson, "remove_dimensions");
         Set<ResourceLocation> inscriptionsRemoved = parseIdList(unlockId, grantsJson, "remove_inscriptions");
-        SpellRarity rarityCap = parseRarityCap(unlockId, grantsJson);
+        String rarityCap = parseRarityCap(unlockId, grantsJson);
 
         return new UnlockGrants(cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved, rarityCap);
     }
 
-    private static SpellRarity parseRarityCap(ResourceLocation unlockId, JsonObject grantsJson) {
+    private static String parseRarityCap(ResourceLocation unlockId, JsonObject grantsJson) {
         if (!grantsJson.has("rarity_cap")) {
             return null;
         }
@@ -110,17 +109,13 @@ public final class UnlockJsonParser {
             logger.warn("unlock {} 'rarity_cap' is not a string, ignoring", unlockId);
             return null;
         }
-        // skipping the parse when Iron's is missing keeps SpellRarity.valueOf off the path
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return null;
-        }
         String raw = element.getAsString();
-        try {
-            return SpellRarity.valueOf(raw.trim().toUpperCase());
-        } catch (IllegalArgumentException invalid) {
+        String upper = raw.trim().toUpperCase();
+        if (!PlayerProgress.RARITY_RANKS.containsKey(upper)) {
             logger.warn("unlock {} 'rarity_cap' value '{}' is not a valid rarity, skipping", unlockId, raw);
             return null;
         }
+        return upper;
     }
 
     private static Set<ResourceLocation> parseIdList(ResourceLocation unlockId, JsonObject grantsJson, String key) {

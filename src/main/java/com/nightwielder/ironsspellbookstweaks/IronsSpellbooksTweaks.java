@@ -37,11 +37,11 @@ public class IronsSpellbooksTweaks {
 
         MinecraftForge.EVENT_BUS.register(ManaAttributeHandler.class);
         MinecraftForge.EVENT_BUS.register(ManaRegenCancelHandler.class);
-        MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
-        MinecraftForge.EVENT_BUS.register(SpellRarityGateHandler.class);
-        MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
-        // gated on Iron's presence because the handler directly references BlackHole, which can't resolve when the mod is missing
+        // gated on Iron's presence because these handlers reference Iron's event types in their @SubscribeEvent parameter signatures, which Forge resolves at registration time before any runtime isLoaded check could intercept
         if (IronsSpellbooksCompat.isLoaded()) {
+            MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
+            MinecraftForge.EVENT_BUS.register(SpellRarityGateHandler.class);
+            MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
             MinecraftForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
         }
         MinecraftForge.EVENT_BUS.register(PlayerProgressEventHandler.class);

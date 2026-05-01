@@ -30,72 +30,90 @@ public class ISSTweaksCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("isstweaks").requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("unlock")
-                                .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.literal("grant")
+                                .then(Commands.argument("player", EntityArgument.players())
                                         .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
                                                 .suggests(UNLOCK_ID_SUGGESTIONS)
-                                                .executes(ISSTweaksCommand::executeUnlock))))
+                                                .executes(ISSTweaksCommand::executeGrant))))
                         .then(Commands.literal("revoke")
-                                .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("player", EntityArgument.players())
                                         .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
                                                 .suggests(UNLOCK_ID_SUGGESTIONS)
                                                 .executes(ISSTweaksCommand::executeRevoke))))
                         .then(Commands.literal("status")
-                                .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("player", EntityArgument.players())
                                         .executes(ISSTweaksCommand::executeStatus)))
                         .then(Commands.literal("reset")
-                                .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("player", EntityArgument.players())
                                         .executes(ISSTweaksCommand::executeReset)))
         );
     }
 
-    private static int executeUnlock(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
+    private static int executeGrant(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
         ResourceLocation unlockId = ResourceLocationArgument.getId(context, "unlock_id");
         UnlockDefinition definition = UnlockManager.getById(unlockId).orElse(null);
         if (definition == null) {
             context.getSource().sendFailure(Component.literal("unknown unlock: " + unlockId));
             return 0;
         }
-        UnlockApplicator.apply(player, definition);
-        context.getSource().sendSuccess(() -> Component.literal("granted " + unlockId + " to " + player.getName().getString()), true);
-        return 1;
+        CommandSourceStack source = context.getSource();
+        for (ServerPlayer player : players) {
+            UnlockApplicator.apply(player, definition);
+            source.sendSuccess(() -> Component.literal("granted " + unlockId + " to " + player.getName().getString()), true);
+        }
+        return players.size();
     }
 
     private static int executeRevoke(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
         ResourceLocation unlockId = ResourceLocationArgument.getId(context, "unlock_id");
-        boolean removed = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
-                .map(progress -> progress.removeUnlockGranted(unlockId))
-                .orElse(false);
-        if (!removed) {
-            context.getSource().sendFailure(Component.literal(player.getName().getString() + " did not have unlock " + unlockId));
-            return 0;
+        CommandSourceStack source = context.getSource();
+        int succeeded = 0;
+        for (ServerPlayer player : players) {
+            boolean removed = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                    .map(progress -> progress.removeUnlockGranted(unlockId))
+                    .orElse(false);
+            if (removed) {
+                succeeded++;
+                source.sendSuccess(() -> Component.literal("revoked " + unlockId + " from " + player.getName().getString() + " (cumulative bonuses are not undone, run reset for a clean slate)"), true);
+            } else {
+                source.sendFailure(Component.literal(player.getName().getString() + " did not have unlock " + unlockId));
+            }
         }
-        context.getSource().sendSuccess(() -> Component.literal("revoked " + unlockId + " from " + player.getName().getString() + " (cumulative bonuses are not undone, run reset for a clean slate)"), true);
-        return 1;
+        return succeeded;
     }
 
     private static int executeStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
-        // LazyOptional has no ifPresentOrElse, resolve() promotes it to a plain Optional
-        player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).resolve().ifPresentOrElse(progress -> {
-            CommandSourceStack source = context.getSource();
-            source.sendSuccess(() -> Component.literal("isstweaks status for " + player.getName().getString() + ":"), false);
-            source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap().name())), false);
-            source.sendSuccess(() -> Component.literal("  cooldownReductionBonus: " + progress.getCooldownReductionBonus()), false);
-            source.sendSuccess(() -> Component.literal("  castTimeReductionBonus: " + progress.getCastTimeReductionBonus()), false);
-            source.sendSuccess(() -> Component.literal("  dimensionsRemoved: " + progress.getDimensionsRemoved()), false);
-            source.sendSuccess(() -> Component.literal("  inscriptionsRemoved: " + progress.getInscriptionsRemoved()), false);
-            source.sendSuccess(() -> Component.literal("  grantedUnlocks: " + progress.getGrantedUnlocks()), false);
-        }, () -> context.getSource().sendFailure(Component.literal(player.getName().getString() + " has no isstweaks progress data")));
-        return 1;
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
+        CommandSourceStack source = context.getSource();
+        boolean first = true;
+        for (ServerPlayer player : players) {
+            if (!first) {
+                source.sendSuccess(() -> Component.literal(""), false);
+            }
+            first = false;
+            // LazyOptional has no ifPresentOrElse, resolve() promotes it to a plain Optional
+            player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).resolve().ifPresentOrElse(progress -> {
+                source.sendSuccess(() -> Component.literal("isstweaks status for " + player.getName().getString() + ":"), false);
+                source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap())), false);
+                source.sendSuccess(() -> Component.literal("  cooldownReductionBonus: " + progress.getCooldownReductionBonus()), false);
+                source.sendSuccess(() -> Component.literal("  castTimeReductionBonus: " + progress.getCastTimeReductionBonus()), false);
+                source.sendSuccess(() -> Component.literal("  dimensionsRemoved: " + progress.getDimensionsRemoved()), false);
+                source.sendSuccess(() -> Component.literal("  inscriptionsRemoved: " + progress.getInscriptionsRemoved()), false);
+                source.sendSuccess(() -> Component.literal("  grantedUnlocks: " + progress.getGrantedUnlocks()), false);
+            }, () -> source.sendFailure(Component.literal(player.getName().getString() + " has no isstweaks progress data")));
+        }
+        return players.size();
     }
 
     private static int executeReset(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
-        player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).ifPresent(PlayerProgress::reset);
-        context.getSource().sendSuccess(() -> Component.literal("reset isstweaks progress for " + player.getName().getString()), true);
-        return 1;
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
+        CommandSourceStack source = context.getSource();
+        for (ServerPlayer player : players) {
+            player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).ifPresent(PlayerProgress::reset);
+            source.sendSuccess(() -> Component.literal("reset isstweaks progress for " + player.getName().getString()), true);
+        }
+        return players.size();
     }
 }

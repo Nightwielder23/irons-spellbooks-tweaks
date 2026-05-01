@@ -1,7 +1,6 @@
 // Immutable bundle of what a single unlock grants when it fires.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
-import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
@@ -14,14 +13,14 @@ public final class UnlockGrants {
     private final double castTimeReductionBonus;
     private final Set<ResourceLocation> dimensionsRemoved;
     private final Set<ResourceLocation> inscriptionsRemoved;
-    // null means this unlock doesn't touch the player's rarity cap
-    private final SpellRarity rarityCap;
+    // null means this unlock doesn't touch the player's rarity cap. Stored as the rarity name (uppercase) so this class never references SpellRarity directly.
+    private final String rarityCap;
 
     public UnlockGrants(double cooldownReductionBonus,
                         double castTimeReductionBonus,
                         Set<ResourceLocation> dimensionsRemoved,
                         Set<ResourceLocation> inscriptionsRemoved,
-                        SpellRarity rarityCap) {
+                        String rarityCap) {
         this.cooldownReductionBonus = cooldownReductionBonus;
         this.castTimeReductionBonus = castTimeReductionBonus;
         this.dimensionsRemoved = Set.copyOf(dimensionsRemoved);
@@ -45,7 +44,7 @@ public final class UnlockGrants {
         return inscriptionsRemoved;
     }
 
-    public SpellRarity getRarityCap() {
+    public String getRarityCap() {
         return rarityCap;
     }
 
@@ -62,7 +61,7 @@ public final class UnlockGrants {
                 && Double.compare(castTimeReductionBonus, that.castTimeReductionBonus) == 0
                 && dimensionsRemoved.equals(that.dimensionsRemoved)
                 && inscriptionsRemoved.equals(that.inscriptionsRemoved)
-                && rarityCap == that.rarityCap;
+                && Objects.equals(rarityCap, that.rarityCap);
     }
 
     @Override

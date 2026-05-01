@@ -1,10 +1,9 @@
 // Per-player progression state. Persisted via PlayerProgressProvider and cloned on respawn.
 package com.nightwielder.ironsspellbookstweaks.capability;
 
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
-import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -21,13 +20,22 @@ public class PlayerProgress {
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
     private static final String KEY_RARITY_CAP = "rarity_cap";
 
+    // Hardcoded rank order matches Iron's SpellRarity enum so this class can do raise-only comparisons without importing Iron's. Keeping PlayerProgress free of Iron's class refs is what lets the capability layer load when the soft-dep is missing.
+    public static final Map<String, Integer> RARITY_RANKS = Map.of(
+            "COMMON", 0,
+            "UNCOMMON", 1,
+            "RARE", 2,
+            "EPIC", 3,
+            "LEGENDARY", 4
+    );
+
     private double cooldownReductionBonus = 0.0;
     private double castTimeReductionBonus = 0.0;
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
-    // null means no per-player rarity gate, callers fall back to config
-    private SpellRarity rarityCap = null;
+    // null means no per-player rarity gate, callers fall back to config. Stored as the rarity name (uppercase) so this class never references SpellRarity directly.
+    private String rarityCap = null;
 
     public double getCooldownReductionBonus() {
         return cooldownReductionBonus;
@@ -49,7 +57,7 @@ public class PlayerProgress {
         return Collections.unmodifiableSet(grantedUnlocks);
     }
 
-    public SpellRarity getRarityCap() {
+    public String getRarityCap() {
         return rarityCap;
     }
 
@@ -70,11 +78,16 @@ public class PlayerProgress {
     }
 
     // raise-only so a later unlock with a stricter cap can't tighten an earlier loosening
-    public void raiseRarityCap(SpellRarity newCap) {
+    public void raiseRarityCap(String newCap) {
         if (newCap == null) {
             return;
         }
-        if (rarityCap == null || newCap.compareRarity(rarityCap) > 0) {
+        Integer newRank = RARITY_RANKS.get(newCap);
+        if (newRank == null) {
+            return;
+        }
+        Integer currentRank = rarityCap == null ? null : RARITY_RANKS.get(rarityCap);
+        if (currentRank == null || newRank > currentRank) {
             rarityCap = newCap;
         }
     }
@@ -121,7 +134,7 @@ public class PlayerProgress {
         tag.put(KEY_INSCRIPTIONS_REMOVED, writeIdSet(inscriptionsRemoved));
         tag.put(KEY_GRANTED_UNLOCKS, writeIdSet(grantedUnlocks));
         if (rarityCap != null) {
-            tag.putString(KEY_RARITY_CAP, rarityCap.name());
+            tag.putString(KEY_RARITY_CAP, rarityCap);
         }
         return tag;
     }
@@ -136,19 +149,13 @@ public class PlayerProgress {
         rarityCap = readRarityCap(tag);
     }
 
-    // Iron's-loaded check keeps SpellRarity.valueOf off the path when the mod is missing, so a save written with Iron's then reopened without it doesn't crash.
-    private static SpellRarity readRarityCap(CompoundTag tag) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return null;
-        }
+    // unknown rarity names get dropped so a save from a future Iron's version with extra rarities doesn't poison our state
+    private static String readRarityCap(CompoundTag tag) {
         if (!tag.contains(KEY_RARITY_CAP, Tag.TAG_STRING)) {
             return null;
         }
-        try {
-            return SpellRarity.valueOf(tag.getString(KEY_RARITY_CAP));
-        } catch (IllegalArgumentException invalid) {
-            return null;
-        }
+        String stored = tag.getString(KEY_RARITY_CAP);
+        return RARITY_RANKS.containsKey(stored) ? stored : null;
     }
 
     private static ListTag writeIdSet(Set<ResourceLocation> ids) {

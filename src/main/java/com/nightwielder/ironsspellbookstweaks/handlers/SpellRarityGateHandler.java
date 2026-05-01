@@ -32,10 +32,11 @@ public class SpellRarityGateHandler {
         SpellRarity configThreshold = getConfigThreshold();
         Player player = event.getEntity();
         // resolve() converts LazyOptional to plain Optional so a null mapped value does not blow up Optional.of inside LazyOptional.map
-        SpellRarity playerCap = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+        String playerCapName = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
                 .resolve()
                 .map(PlayerProgress::getRarityCap)
                 .orElse(null);
+        SpellRarity playerCap = parseRarity(playerCapName);
         SpellRarity effective = looserOf(configThreshold, playerCap);
         if (effective == null) {
             return;
@@ -84,6 +85,18 @@ public class SpellRarityGateHandler {
             return SpellRarity.valueOf(raw.trim().toUpperCase());
         } catch (IllegalArgumentException invalid) {
             logger.warn("maxSpellRarity '{}' is not a valid rarity, gate disabled until corrected", raw);
+            return null;
+        }
+    }
+
+    // PlayerProgress stores the rarity name as a string to avoid pulling Iron's into the capability layer, so we parse it here at the comparison site
+    private static SpellRarity parseRarity(String name) {
+        if (name == null) {
+            return null;
+        }
+        try {
+            return SpellRarity.valueOf(name);
+        } catch (IllegalArgumentException invalid) {
             return null;
         }
     }
