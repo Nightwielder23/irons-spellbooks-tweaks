@@ -2,6 +2,7 @@ package com.nightwielder.ironsspellbookstweaks;
 
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressEventHandler;
+import com.nightwielder.ironsspellbookstweaks.command.ISSTweaksCommandRegistry;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
@@ -41,6 +42,7 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(UnlockManagerRegistry.class);
         MinecraftForge.EVENT_BUS.register(AdvancementUnlockHandler.class);
         MinecraftForge.EVENT_BUS.register(RetroactiveUnlockHandler.class);
+        MinecraftForge.EVENT_BUS.register(ISSTweaksCommandRegistry.class);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
         logger.info("Iron's Spellbooks Tweaks loaded");
         if (!IronsSpellbooksCompat.isLoaded()) {

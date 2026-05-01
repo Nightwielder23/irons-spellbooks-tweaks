@@ -78,6 +78,11 @@ public class PlayerProgress {
         return grantedUnlocks.add(unlockId);
     }
 
+    // only clears the granted-set membership, cumulative bonuses stay applied since we can't trace which value came from which unlock
+    public boolean removeUnlockGranted(ResourceLocation unlockId) {
+        return grantedUnlocks.remove(unlockId);
+    }
+
     public boolean hasUnlockGranted(ResourceLocation unlockId) {
         return grantedUnlocks.contains(unlockId);
     }
