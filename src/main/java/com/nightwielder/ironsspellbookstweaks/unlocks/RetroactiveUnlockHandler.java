@@ -32,7 +32,7 @@ public class RetroactiveUnlockHandler {
             if (!(unlock.getTrigger() instanceof AdvancementTrigger advancementTrigger)) {
                 continue;
             }
-            // cheap dedup before the advancement lookup; missing cap also short-circuits to skip
+            // cheap dedup before the advancement lookup; missing capability also short-circuits to skip
             boolean alreadyGranted = serverPlayer.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
                     .map(progress -> progress.hasUnlockGranted(unlock.getId()))
                     .orElse(true);
