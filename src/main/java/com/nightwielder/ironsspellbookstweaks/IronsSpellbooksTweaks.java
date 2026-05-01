@@ -8,7 +8,7 @@ import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandl
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
-import com.nightwielder.ironsspellbookstweaks.handlers.SpellLevelCapHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.AdvancementUnlockHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.EntityKillUnlockHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.RetroactiveUnlockHandler;
@@ -38,7 +38,7 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(ManaAttributeHandler.class);
         MinecraftForge.EVENT_BUS.register(ManaRegenCancelHandler.class);
         MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
-        MinecraftForge.EVENT_BUS.register(SpellLevelCapHandler.class);
+        MinecraftForge.EVENT_BUS.register(SpellRarityGateHandler.class);
         MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
         // gated on Iron's presence because the handler directly references BlackHole, which can't resolve when the mod is missing
         if (IronsSpellbooksCompat.isLoaded()) {

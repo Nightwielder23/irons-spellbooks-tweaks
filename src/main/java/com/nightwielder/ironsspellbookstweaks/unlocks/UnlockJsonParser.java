@@ -5,6 +5,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
+import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -83,9 +85,9 @@ public final class UnlockJsonParser {
         }
         JsonObject grantsJson = grantsElement.getAsJsonObject();
 
-        int spellLevelCap = grantsJson.has("spell_level_cap")
-                ? grantsJson.get("spell_level_cap").getAsInt()
-                : -1;
+        if (grantsJson.has("spell_level_cap")) {
+            logger.warn("unlock {} uses 'spell_level_cap' grant, which is no longer supported (replaced by 'rarity_cap'). Ignoring.", unlockId);
+        }
         double cooldownReductionBonus = grantsJson.has("cooldown_reduction_bonus")
                 ? grantsJson.get("cooldown_reduction_bonus").getAsDouble()
                 : 0.0;
@@ -94,8 +96,31 @@ public final class UnlockJsonParser {
                 : 0.0;
         Set<ResourceLocation> dimensionsRemoved = parseIdList(unlockId, grantsJson, "remove_dimensions");
         Set<ResourceLocation> inscriptionsRemoved = parseIdList(unlockId, grantsJson, "remove_inscriptions");
+        SpellRarity rarityCap = parseRarityCap(unlockId, grantsJson);
 
-        return new UnlockGrants(spellLevelCap, cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved);
+        return new UnlockGrants(cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved, rarityCap);
+    }
+
+    private static SpellRarity parseRarityCap(ResourceLocation unlockId, JsonObject grantsJson) {
+        if (!grantsJson.has("rarity_cap")) {
+            return null;
+        }
+        JsonElement element = grantsJson.get("rarity_cap");
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+            logger.warn("unlock {} 'rarity_cap' is not a string, ignoring", unlockId);
+            return null;
+        }
+        // skipping the parse when Iron's is missing keeps SpellRarity.valueOf off the path
+        if (!IronsSpellbooksCompat.isLoaded()) {
+            return null;
+        }
+        String raw = element.getAsString();
+        try {
+            return SpellRarity.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException invalid) {
+            logger.warn("unlock {} 'rarity_cap' value '{}' is not a valid rarity, skipping", unlockId, raw);
+            return null;
+        }
     }
 
     private static Set<ResourceLocation> parseIdList(ResourceLocation unlockId, JsonObject grantsJson, String key) {

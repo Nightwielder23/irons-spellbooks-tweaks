@@ -82,7 +82,7 @@ public class ISSTweaksCommand {
         player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).resolve().ifPresentOrElse(progress -> {
             CommandSourceStack source = context.getSource();
             source.sendSuccess(() -> Component.literal("isstweaks status for " + player.getName().getString() + ":"), false);
-            source.sendSuccess(() -> Component.literal("  spellLevelCap: " + progress.getSpellLevelCap()), false);
+            source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap().name())), false);
             source.sendSuccess(() -> Component.literal("  cooldownReductionBonus: " + progress.getCooldownReductionBonus()), false);
             source.sendSuccess(() -> Component.literal("  castTimeReductionBonus: " + progress.getCastTimeReductionBonus()), false);
             source.sendSuccess(() -> Component.literal("  dimensionsRemoved: " + progress.getDimensionsRemoved()), false);

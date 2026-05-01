@@ -23,9 +23,6 @@ public final class UnlockApplicator {
                 return;
             }
             UnlockGrants grants = unlock.getGrants();
-            if (grants.getSpellLevelCap() > 0) {
-                progress.raiseSpellLevelCap(grants.getSpellLevelCap());
-            }
             if (grants.getCooldownReductionBonus() != 0.0) {
                 progress.addCooldownBonus(grants.getCooldownReductionBonus());
             }
@@ -37,6 +34,9 @@ public final class UnlockApplicator {
             }
             for (ResourceLocation inscription : grants.getInscriptionsRemoved()) {
                 progress.addInscriptionRemoved(inscription);
+            }
+            if (grants.getRarityCap() != null) {
+                progress.raiseRarityCap(grants.getRarityCap());
             }
             progress.markUnlockGranted(unlock.getId());
             ManaAttributeHandler.refreshProgressModifiers(player);

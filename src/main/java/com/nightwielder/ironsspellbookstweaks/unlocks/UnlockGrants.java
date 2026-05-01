@@ -1,35 +1,32 @@
 // Immutable bundle of what a single unlock grants when it fires.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
+import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
 public final class UnlockGrants {
 
-    public static final UnlockGrants EMPTY = new UnlockGrants(-1, 0.0, 0.0, Set.of(), Set.of());
+    public static final UnlockGrants EMPTY = new UnlockGrants(0.0, 0.0, Set.of(), Set.of(), null);
 
-    // -1 means no spell-level grant from this unlock
-    private final int spellLevelCap;
     private final double cooldownReductionBonus;
     private final double castTimeReductionBonus;
     private final Set<ResourceLocation> dimensionsRemoved;
     private final Set<ResourceLocation> inscriptionsRemoved;
+    // null means this unlock doesn't touch the player's rarity cap
+    private final SpellRarity rarityCap;
 
-    public UnlockGrants(int spellLevelCap,
-                        double cooldownReductionBonus,
+    public UnlockGrants(double cooldownReductionBonus,
                         double castTimeReductionBonus,
                         Set<ResourceLocation> dimensionsRemoved,
-                        Set<ResourceLocation> inscriptionsRemoved) {
-        this.spellLevelCap = spellLevelCap;
+                        Set<ResourceLocation> inscriptionsRemoved,
+                        SpellRarity rarityCap) {
         this.cooldownReductionBonus = cooldownReductionBonus;
         this.castTimeReductionBonus = castTimeReductionBonus;
         this.dimensionsRemoved = Set.copyOf(dimensionsRemoved);
         this.inscriptionsRemoved = Set.copyOf(inscriptionsRemoved);
-    }
-
-    public int getSpellLevelCap() {
-        return spellLevelCap;
+        this.rarityCap = rarityCap;
     }
 
     public double getCooldownReductionBonus() {
@@ -48,6 +45,10 @@ public final class UnlockGrants {
         return inscriptionsRemoved;
     }
 
+    public SpellRarity getRarityCap() {
+        return rarityCap;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -57,15 +58,15 @@ public final class UnlockGrants {
             return false;
         }
         UnlockGrants that = (UnlockGrants) other;
-        return spellLevelCap == that.spellLevelCap
-                && Double.compare(cooldownReductionBonus, that.cooldownReductionBonus) == 0
+        return Double.compare(cooldownReductionBonus, that.cooldownReductionBonus) == 0
                 && Double.compare(castTimeReductionBonus, that.castTimeReductionBonus) == 0
                 && dimensionsRemoved.equals(that.dimensionsRemoved)
-                && inscriptionsRemoved.equals(that.inscriptionsRemoved);
+                && inscriptionsRemoved.equals(that.inscriptionsRemoved)
+                && rarityCap == that.rarityCap;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(spellLevelCap, cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved);
+        return Objects.hash(cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved, rarityCap);
     }
 }

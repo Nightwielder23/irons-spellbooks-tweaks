@@ -12,7 +12,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue CAST_TIME_REDUCTION_BONUS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_MANA_REGEN;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SPELL_CASTING_DISABLED_DIMENSIONS;
-    public static final ForgeConfigSpec.IntValue MAX_SPELL_LEVEL_GLOBAL;
+    public static final ForgeConfigSpec.ConfigValue<String> MAX_SPELL_RARITY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLACKHOLE_IMMUNITY;
 
@@ -41,9 +41,9 @@ public class Config {
         SPELL_CASTING_DISABLED_DIMENSIONS = builder
                 .comment("Dimensions where spell casting is fully blocked. List of dimension IDs like \"minecraft:nether\" or \"twilightforest:twilight_forest\". Empty list disables this feature. Affects players only, not mob casters.")
                 .defineList("spellCastingDisabledDimensions", List.of(), entry -> entry instanceof String);
-        MAX_SPELL_LEVEL_GLOBAL = builder
-                .comment("Hard cap on the level any spell can be cast at by a player. Set to -1 to leave alone. Mob casters are not affected.")
-                .defineInRange("maxSpellLevelGlobal", -1, -1, 100);
+        MAX_SPELL_RARITY = builder
+                .comment("Highest spell rarity players are allowed to cast. Spells with a higher minimum rarity are blocked. Valid values: common, uncommon, rare, epic, legendary, or empty to disable. For example, 'uncommon' allows common and uncommon spells but blocks rare, epic, and legendary. 'legendary' allows everything. Mob casters are not affected.")
+                .define("maxSpellRarity", "");
         INSCRIPTION_BLACKLIST = builder
                 .comment("Spell IDs that cannot be inscribed at the inscription table. List of spell IDs like \"irons_spellbooks:fireball\". Empty list disables this feature. Players will see their inscription cancelled silently.")
                 .defineList("inscriptionBlacklist", List.of(), entry -> entry instanceof String);

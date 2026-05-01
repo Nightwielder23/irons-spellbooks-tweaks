@@ -42,8 +42,8 @@ spellCastingDisabledDimensions = ["minecraft:nether", "twilightforest:twilight_f
 ```
 Mob casters are not affected. Iron's wizards and bosses still cast normally in blocked dimensions.
 
-**`maxSpellLevelGlobal`** (default `-1`, range `-1` to `100`)
-Hard cap on the level any player-cast spell can fire at. Higher levels still consume scroll/spellbook slots normally, they just cap at the configured ceiling when cast. Mob casters bypass this so Iron's wizards and bosses keep their full power.
+**`maxSpellRarity`** (default empty)
+Highest spell rarity players are allowed to cast. Spells with a higher minimum rarity are blocked. Valid values: `common`, `uncommon`, `rare`, `epic`, `legendary`, or empty to disable. For example, `"uncommon"` allows common and uncommon spells but blocks rare, epic, and legendary. `"legendary"` allows everything. Mob casters are not affected.
 
 **`inscriptionBlacklist`** (default empty list)
 Spell IDs that cannot be inscribed at the inscription table. Use full namespaced spell IDs:
@@ -74,7 +74,7 @@ v1.1 adds a datapack-driven unlock system that lets you gate Iron's features beh
 ### Grants
 
 Each unlock can grant any combination of:
-- `spell_level_cap` — raise the player's spell level cap (raise-only, never lowers)
+- `rarity_cap` — raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with `maxSpellRarity` config, the effective ceiling is whichever is looser. Raise-only, a later unlock can never tighten an earlier loosening.
 - `cooldown_reduction_bonus` — add to the player's cooldown reduction attribute
 - `cast_time_reduction_bonus` — add to the player's cast time reduction attribute
 - `remove_dimensions` — exempt the player from the casting dimension blacklist for these dimensions

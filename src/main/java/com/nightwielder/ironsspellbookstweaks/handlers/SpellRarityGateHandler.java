@@ -1,0 +1,90 @@
+// Cancels player spell casts whose minimum rarity is above the effective ceiling. Ceiling is the looser of the config gate and the player's per-player cap. Mob casters are unaffected because SpellPreCastEvent is a PlayerEvent.
+package com.nightwielder.ironsspellbookstweaks.handlers;
+
+import com.nightwielder.ironsspellbookstweaks.Config;
+import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
+import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
+import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
+import io.redspace.ironsspellbooks.api.config.SpellConfigManager;
+import io.redspace.ironsspellbooks.api.config.SpellConfigParameter;
+import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
+import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
+import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
+import io.redspace.ironsspellbooks.api.spells.SpellRarity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public class SpellRarityGateHandler {
+
+    private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/SpellRarityGateHandler");
+
+    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast
+    private static String cachedRawValue;
+    private static SpellRarity cachedThreshold;
+
+    @SubscribeEvent
+    public static void onSpellPreCast(SpellPreCastEvent event) {
+        if (!IronsSpellbooksCompat.isLoaded()) {
+            return;
+        }
+        SpellRarity configThreshold = getConfigThreshold();
+        Player player = event.getEntity();
+        // resolve() converts LazyOptional to plain Optional so a null mapped value does not blow up Optional.of inside LazyOptional.map
+        SpellRarity playerCap = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                .resolve()
+                .map(PlayerProgress::getRarityCap)
+                .orElse(null);
+        SpellRarity effective = looserOf(configThreshold, playerCap);
+        if (effective == null) {
+            return;
+        }
+        AbstractSpell spell = SpellRegistry.getSpell(event.getSpellId());
+        if (spell == null) {
+            return;
+        }
+        // AbstractSpell.getMinRarity is deprecated for removal, so go through SpellConfigManager directly
+        SpellRarity spellRarity = SpellConfigManager.getSpellConfigValue(spell, SpellConfigParameter.MIN_RARITY);
+        if (spellRarity == null) {
+            return;
+        }
+        if (spellRarity.compareRarity(effective) > 0) {
+            event.setCanceled(true);
+        }
+    }
+
+    // Higher-tier value means the gate is looser (allows more rarities through). Player cap raises the ceiling above whatever config says.
+    private static SpellRarity looserOf(SpellRarity a, SpellRarity b) {
+        if (a == null) {
+            return b;
+        }
+        if (b == null) {
+            return a;
+        }
+        return a.compareRarity(b) >= 0 ? a : b;
+    }
+
+    private static SpellRarity getConfigThreshold() {
+        String currentRaw = Config.MAX_SPELL_RARITY.get();
+        if (currentRaw == cachedRawValue) {
+            return cachedThreshold;
+        }
+        SpellRarity parsed = parseThreshold(currentRaw);
+        cachedRawValue = currentRaw;
+        cachedThreshold = parsed;
+        return parsed;
+    }
+
+    private static SpellRarity parseThreshold(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return SpellRarity.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException invalid) {
+            logger.warn("maxSpellRarity '{}' is not a valid rarity, gate disabled until corrected", raw);
+            return null;
+        }
+    }
+}
