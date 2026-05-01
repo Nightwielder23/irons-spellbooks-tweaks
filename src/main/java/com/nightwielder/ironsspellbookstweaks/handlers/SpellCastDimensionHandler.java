@@ -2,6 +2,7 @@
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
+import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import java.util.List;
@@ -21,8 +22,15 @@ public class SpellCastDimensionHandler {
         }
         ResourceLocation currentDimension = event.getEntity().level().dimension().location();
         String currentDimensionId = currentDimension.toString();
-        if (blockedDimensions.contains(currentDimensionId)) {
-            event.setCanceled(true);
+        if (!blockedDimensions.contains(currentDimensionId)) {
+            return;
         }
+        boolean playerExempted = event.getEntity().getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                .map(progress -> progress.getDimensionsRemoved().contains(currentDimension))
+                .orElse(false);
+        if (playerExempted) {
+            return;
+        }
+        event.setCanceled(true);
     }
 }

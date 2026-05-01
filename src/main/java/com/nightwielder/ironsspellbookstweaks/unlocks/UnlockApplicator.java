@@ -2,6 +2,7 @@
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
+import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,6 +39,7 @@ public final class UnlockApplicator {
                 progress.addInscriptionRemoved(inscription);
             }
             progress.markUnlockGranted(unlock.getId());
+            ManaAttributeHandler.refreshProgressModifiers(player);
             unlock.getMessage().ifPresent(messageText -> {
                 if (player instanceof ServerPlayer serverPlayer) {
                     serverPlayer.sendSystemMessage(Component.literal(messageText));
