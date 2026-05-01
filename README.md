@@ -122,7 +122,7 @@ The grant is raise-only, so a later unlock that tries to set `rarity_cap` to `un
 
 ### Admin command
 
-- `/isstweaks unlock <player> <unlock_id>`: grant an unlock manually
+- `/isstweaks grant <player> <unlock_id>`: grant an unlock manually
 - `/isstweaks revoke <player> <unlock_id>`: remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
 - `/isstweaks status <player>`: show the player's current progress
 - `/isstweaks reset <player>`: wipe all progression data for the player
