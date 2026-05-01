@@ -14,6 +14,7 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SPELL_CASTING_DISABLED_DIMENSIONS;
     public static final ForgeConfigSpec.IntValue MAX_SPELL_LEVEL_GLOBAL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLACKHOLE_IMMUNITY;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -46,6 +47,11 @@ public class Config {
         INSCRIPTION_BLACKLIST = builder
                 .comment("Spell IDs that cannot be inscribed at the inscription table. List of spell IDs like \"irons_spellbooks:fireball\". Empty list disables this feature. Players will see their inscription cancelled silently.")
                 .defineList("inscriptionBlacklist", List.of(), entry -> entry instanceof String);
+        builder.pop();
+        builder.push("blackhole");
+        BLACKHOLE_IMMUNITY = builder
+                .comment("Per-entity-type resistance to black hole pull. Format: \"entity_id:strength\" where strength is 0.0 (no effect) to 1.0 (fully immune). Iron's hardcodes a 0.3 minimum pull regardless of KNOCKBACK_RESISTANCE attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.")
+                .defineList("blackholeImmunity", List.of(), entry -> entry instanceof String);
         builder.pop();
         SERVER_SPEC = builder.build();
     }

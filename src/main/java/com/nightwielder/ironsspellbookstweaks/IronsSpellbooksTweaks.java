@@ -3,6 +3,7 @@ package com.nightwielder.ironsspellbookstweaks;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressEventHandler;
 import com.nightwielder.ironsspellbookstweaks.command.ISSTweaksCommandRegistry;
+import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
@@ -39,6 +40,10 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
         MinecraftForge.EVENT_BUS.register(SpellLevelCapHandler.class);
         MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
+        // gated on Iron's presence because the handler directly references BlackHole, which can't resolve when the mod is missing
+        if (IronsSpellbooksCompat.isLoaded()) {
+            MinecraftForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
+        }
         MinecraftForge.EVENT_BUS.register(PlayerProgressEventHandler.class);
         MinecraftForge.EVENT_BUS.register(UnlockManagerRegistry.class);
         MinecraftForge.EVENT_BUS.register(AdvancementUnlockHandler.class);
