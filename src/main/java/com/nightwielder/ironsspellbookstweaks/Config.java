@@ -15,6 +15,7 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<String> MAX_SPELL_RARITY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLACKHOLE_IMMUNITY;
+    public static final ForgeConfigSpec.BooleanValue REQUIREMENTS_COMMAND_ENABLED;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -52,6 +53,11 @@ public class Config {
         BLACKHOLE_IMMUNITY = builder
                 .comment("Per-entity-type resistance to black hole pull. Format: \"entity_id:strength\" where strength is 0.0 (no effect) to 1.0 (fully immune). Iron's hardcodes a 0.3 minimum pull regardless of KNOCKBACK_RESISTANCE attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.")
                 .defineList("blackholeImmunity", List.of(), entry -> entry instanceof String);
+        builder.pop();
+        builder.push("commands");
+        REQUIREMENTS_COMMAND_ENABLED = builder
+                .comment("Whether to register the /isstweaks requirements subcommand, which lets any player look up unlock requirements by spell or rarity. Set false to skip registration entirely. Other subcommands are unaffected.")
+                .define("requirementsCommandEnabled", true);
         builder.pop();
         SERVER_SPEC = builder.build();
     }

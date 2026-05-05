@@ -24,7 +24,8 @@ public final class UnlockJsonParser {
         UnlockTrigger trigger = parseTrigger(id, json);
         UnlockGrants grants = parseGrants(id, json);
         Optional<String> message = parseMessage(id, json);
-        return new UnlockDefinition(id, trigger, grants, message);
+        String requirementText = parseRequirementText(id, json);
+        return new UnlockDefinition(id, trigger, grants, message, requirementText);
     }
 
     private static UnlockTrigger parseTrigger(ResourceLocation unlockId, JsonObject json) {
@@ -155,5 +156,17 @@ public final class UnlockJsonParser {
             return Optional.empty();
         }
         return Optional.of(messageElement.getAsString());
+    }
+
+    private static String parseRequirementText(ResourceLocation unlockId, JsonObject json) {
+        if (!json.has("requirement_text")) {
+            return null;
+        }
+        JsonElement element = json.get("requirement_text");
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+            logger.warn("unlock {} 'requirement_text' is not a string, ignoring", unlockId);
+            return null;
+        }
+        return element.getAsString();
     }
 }

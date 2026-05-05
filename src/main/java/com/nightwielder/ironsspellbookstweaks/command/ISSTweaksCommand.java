@@ -1,16 +1,21 @@
-// Admin command tree for inspecting and editing PlayerProgress capability state. Op-level (permission 2) on every subcommand.
+// Command tree for /isstweaks. Admin subcommands (grant/revoke/status/reset) require permission level 2; the requirements lookup is open to all players when registered.
 package com.nightwielder.ironsspellbookstweaks.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockApplicator;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockDefinition;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockManager;
+import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.util.Collection;
+import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -28,25 +33,37 @@ public class ISSTweaksCommand {
     };
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(
-                Commands.literal("isstweaks").requires(source -> source.hasPermission(2))
-                        .then(Commands.literal("grant")
-                                .then(Commands.argument("player", EntityArgument.players())
-                                        .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
-                                                .suggests(UNLOCK_ID_SUGGESTIONS)
-                                                .executes(ISSTweaksCommand::executeGrant))))
-                        .then(Commands.literal("revoke")
-                                .then(Commands.argument("player", EntityArgument.players())
-                                        .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
-                                                .suggests(UNLOCK_ID_SUGGESTIONS)
-                                                .executes(ISSTweaksCommand::executeRevoke))))
-                        .then(Commands.literal("status")
-                                .then(Commands.argument("player", EntityArgument.players())
-                                        .executes(ISSTweaksCommand::executeStatus)))
-                        .then(Commands.literal("reset")
-                                .then(Commands.argument("player", EntityArgument.players())
-                                        .executes(ISSTweaksCommand::executeReset)))
-        );
+        Predicate<CommandSourceStack> isOp = source -> source.hasPermission(2);
+        LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("isstweaks")
+                .then(Commands.literal("grant").requires(isOp)
+                        .then(Commands.argument("player", EntityArgument.players())
+                                .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
+                                        .suggests(UNLOCK_ID_SUGGESTIONS)
+                                        .executes(ISSTweaksCommand::executeGrant))))
+                .then(Commands.literal("revoke").requires(isOp)
+                        .then(Commands.argument("player", EntityArgument.players())
+                                .then(Commands.argument("unlock_id", ResourceLocationArgument.id())
+                                        .suggests(UNLOCK_ID_SUGGESTIONS)
+                                        .executes(ISSTweaksCommand::executeRevoke))))
+                .then(Commands.literal("status").requires(isOp)
+                        .then(Commands.argument("player", EntityArgument.players())
+                                .executes(ISSTweaksCommand::executeStatus)))
+                .then(Commands.literal("reset").requires(isOp)
+                        .then(Commands.argument("player", EntityArgument.players())
+                                .executes(ISSTweaksCommand::executeReset)));
+        // Skip the requirements subcommand entirely when disabled or when Iron's is absent. The handler class references Iron's API types, so loading it without Iron's would fail.
+        if (Config.REQUIREMENTS_COMMAND_ENABLED.get() && IronsSpellbooksCompat.isLoaded()) {
+            root.then(Commands.literal("requirements")
+                    .then(Commands.literal("spell")
+                            .then(Commands.argument("spell", ResourceLocationArgument.id())
+                                    .suggests(RequirementsCommandHandler.SPELL_ID_SUGGESTIONS)
+                                    .executes(RequirementsCommandHandler::executeSpell)))
+                    .then(Commands.literal("rarity")
+                            .then(Commands.argument("rarity", StringArgumentType.word())
+                                    .suggests(RequirementsCommandHandler.RARITY_SUGGESTIONS)
+                                    .executes(RequirementsCommandHandler::executeRarity))));
+        }
+        dispatcher.register(root);
     }
 
     private static int executeGrant(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

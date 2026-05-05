@@ -10,12 +10,14 @@ public final class UnlockDefinition {
     private final UnlockTrigger trigger;
     private final UnlockGrants grants;
     private final Optional<String> message;
+    private final String requirementText;
 
-    public UnlockDefinition(ResourceLocation id, UnlockTrigger trigger, UnlockGrants grants, Optional<String> message) {
+    public UnlockDefinition(ResourceLocation id, UnlockTrigger trigger, UnlockGrants grants, Optional<String> message, String requirementText) {
         this.id = id;
         this.trigger = trigger;
         this.grants = grants;
         this.message = message;
+        this.requirementText = requirementText;
     }
 
     public ResourceLocation getId() {
@@ -32,6 +34,10 @@ public final class UnlockDefinition {
 
     public Optional<String> getMessage() {
         return message;
+    }
+
+    public String getRequirementText() {
+        return requirementText;
     }
 
     @Override

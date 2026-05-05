@@ -1,4 +1,4 @@
-// Hooks the PlayerProgress capability into player lifecycle: attach on entity creation, copy across respawn.
+// Hooks the PlayerProgress capability into player lifecycle: attach on entity creation and copy across respawn.
 package com.nightwielder.ironsspellbookstweaks.capability;
 
 import net.minecraft.world.entity.Entity;

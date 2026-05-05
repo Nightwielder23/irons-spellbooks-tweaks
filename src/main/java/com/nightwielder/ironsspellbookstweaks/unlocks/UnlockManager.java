@@ -86,4 +86,13 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
     public static Optional<UnlockDefinition> getById(ResourceLocation unlockId) {
         return Optional.ofNullable(unlocks.get(unlockId));
     }
+
+    public static Optional<UnlockDefinition> findUnlockForInscription(ResourceLocation spellId) {
+        for (UnlockDefinition definition : unlocks.values()) {
+            if (definition.getGrants().getInscriptionsRemoved().contains(spellId)) {
+                return Optional.of(definition);
+            }
+        }
+        return Optional.empty();
+    }
 }
