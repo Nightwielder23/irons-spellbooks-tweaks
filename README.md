@@ -84,6 +84,11 @@ Each unlock can grant any combination of:
 - `remove_dimensions`: exempt the player from the casting dimension blacklist for these dimensions
 - `remove_inscriptions`: exempt the player from the inscription blacklist for these spells
 
+### Optional fields
+
+**`requirement_text`** (optional string)
+Hint text shown to players when they run `/isstweaks requirements`. Should describe what the player needs to do to earn the unlock. If omitted the command tells the player no requirement text was provided.
+
 ### Examples
 
 Lock fireball behind killing the Dead King. In your pack's datapack at `data/mypack/isstweaks/unlocks/fireball_unlock.json`:
@@ -97,7 +102,8 @@ Lock fireball behind killing the Dead King. In your pack's datapack at `data/myp
   "grants": {
     "remove_inscriptions": ["irons_spellbooks:fireball"]
   },
-  "message": "Fireball unlocked."
+  "message": "Fireball unlocked.",
+  "requirement_text": "Defeat the Dead King to unlock"
 }
 ```
 
@@ -114,20 +120,26 @@ Tier-up the player's spell ceiling on a boss kill. With `maxSpellRarity = "rare"
   "grants": {
     "rarity_cap": "epic"
   },
-  "message": "Epic spells unlocked."
+  "message": "Epic spells unlocked.",
+  "requirement_text": "Defeat the Fire Boss to unlock epic spells"
 }
 ```
 
 The grant is raise-only, so a later unlock that tries to set `rarity_cap` to `uncommon` would be ignored.
 
-### Admin command
+### Commands
 
+OP-only:
 - `/isstweaks grant <player> <unlock_id>`: grant an unlock manually
 - `/isstweaks revoke <player> <unlock_id>`: remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
 - `/isstweaks status <player>`: show the player's current progress
 - `/isstweaks reset <player>`: wipe all progression data for the player
 
-All subcommands require permission level 2.
+Open to all players:
+- `/isstweaks requirements spell <spell_id>`: shows the unlock requirement for a specific spell. Output is prefixed with `[Unlocked]` if the calling player has already met the requirement.
+- `/isstweaks requirements rarity <rarity>`: shows the unlock requirement for a rarity tier (`common`, `uncommon`, `rare`, `epic`, `legendary`). Same `[Unlocked]` indicator if the player's current rarity cap is at or above the queried tier.
+
+The requirements subcommand can be disabled in config via `[commands]` `requirementsCommandEnabled = false`.
 
 ## Compatibility
 
