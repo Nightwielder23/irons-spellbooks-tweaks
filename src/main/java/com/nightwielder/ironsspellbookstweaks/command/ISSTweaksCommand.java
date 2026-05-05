@@ -7,7 +7,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockApplicator;
@@ -51,8 +50,8 @@ public class ISSTweaksCommand {
                 .then(Commands.literal("reset").requires(isOp)
                         .then(Commands.argument("player", EntityArgument.players())
                                 .executes(ISSTweaksCommand::executeReset)));
-        // Skip the requirements subcommand entirely when disabled or when Iron's is absent. The handler class references Iron's API types, so loading it without Iron's would fail.
-        if (Config.REQUIREMENTS_COMMAND_ENABLED.get() && IronsSpellbooksCompat.isLoaded()) {
+        // Skip the requirements subcommand when Iron's is absent. The handler class references Iron's API types, so loading it without Iron's would fail.
+        if (IronsSpellbooksCompat.isLoaded()) {
             root.then(Commands.literal("requirements")
                     .then(Commands.literal("spell")
                             .then(Commands.argument("spell", ResourceLocationArgument.id())

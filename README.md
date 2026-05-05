@@ -139,8 +139,6 @@ Open to all players:
 - `/isstweaks requirements spell <spell_id>`: shows the unlock requirement for a specific spell. Output is prefixed with `[Unlocked]` if the calling player has already met the requirement.
 - `/isstweaks requirements rarity <rarity>`: shows the unlock requirement for a rarity tier (`common`, `uncommon`, `rare`, `epic`, `legendary`). Same `[Unlocked]` indicator if the player's current rarity cap is at or above the queried tier.
 
-The requirements subcommand can be disabled in config via `[commands]` `requirementsCommandEnabled = false`.
-
 ## Compatibility
 
 - Minecraft 1.20.1 Forge only (1.20.1 is the only currently-maintained branch of Iron's Spellbooks)
