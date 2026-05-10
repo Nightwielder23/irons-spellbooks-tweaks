@@ -115,6 +115,8 @@ public class ISSTweaksCommand {
                 source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap())), false);
                 source.sendSuccess(() -> Component.literal("  cooldownReductionBonus: " + progress.getCooldownReductionBonus()), false);
                 source.sendSuccess(() -> Component.literal("  castTimeReductionBonus: " + progress.getCastTimeReductionBonus()), false);
+                source.sendSuccess(() -> Component.literal("  maxManaBonus: " + progress.getMaxManaBonus()), false);
+                source.sendSuccess(() -> Component.literal("  manaRegenBonus: " + progress.getManaRegenBonus()), false);
                 source.sendSuccess(() -> Component.literal("  dimensionsRemoved: " + progress.getDimensionsRemoved()), false);
                 source.sendSuccess(() -> Component.literal("  inscriptionsRemoved: " + progress.getInscriptionsRemoved()), false);
                 source.sendSuccess(() -> Component.literal("  grantedUnlocks: " + progress.getGrantedUnlocks()), false);

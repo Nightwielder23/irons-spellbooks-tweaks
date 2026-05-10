@@ -8,9 +8,7 @@ modId="irons_spellbooks_tweaks"
 version="\${file.jarVersion}"
 displayName="Iron's Spellbooks Tweaks"
 authors="nightwielder23"
-description='''
-Config tweaks for Iron's Spells 'n Spellbooks. Modpack-maker focused. Adds TOML knobs for mana regen rate, starting mana on first join, global cooldown reduction, and a flag to fully disable passive mana regen. Soft dependency, mod loads without Iron's Spellbooks present and does nothing.
-'''
+description='''${mod_description}'''
 
 [[dependencies.irons_spellbooks_tweaks]]
     modId="irons_spellbooks"

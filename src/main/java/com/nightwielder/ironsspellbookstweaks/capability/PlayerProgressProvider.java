@@ -39,8 +39,4 @@ public class PlayerProgressProvider implements ICapabilitySerializable<CompoundT
     public void deserializeNBT(CompoundTag tag) {
         progress.deserializeNBT(tag);
     }
-
-    public void invalidate() {
-        optional.invalidate();
-    }
 }

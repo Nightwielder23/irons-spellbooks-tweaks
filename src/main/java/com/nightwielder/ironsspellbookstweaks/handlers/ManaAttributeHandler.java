@@ -28,6 +28,8 @@ public class ManaAttributeHandler {
     // distinct UUIDs for capability-sourced bonuses so they stack with the config-sourced modifiers above
     private static final UUID COOLDOWN_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("71d6cf52-9283-8354-3061-5e6f70819203");
     private static final UUID CAST_TIME_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("82e7d063-a394-9465-4172-6f7081920314");
+    private static final UUID MAX_MANA_PROGRESS_MODIFIER_ID = UUID.fromString("93f8e174-b4a5-a576-5283-708192a30425");
+    private static final UUID MANA_REGEN_PROGRESS_MODIFIER_ID = UUID.fromString("a409f285-c5b6-b687-6394-8192a304a536");
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
@@ -41,6 +43,8 @@ public class ManaAttributeHandler {
         applyCastTimeReductionBonus(player);
         applyProgressCooldownBonus(player);
         applyProgressCastTimeBonus(player);
+        applyProgressMaxManaBonus(player);
+        applyProgressManaRegenBonus(player);
     }
 
     // Called by UnlockApplicator when an unlock fires mid-session so the new bonus shows up before next login.
@@ -50,6 +54,8 @@ public class ManaAttributeHandler {
         }
         applyProgressCooldownBonus(player);
         applyProgressCastTimeBonus(player);
+        applyProgressMaxManaBonus(player);
+        applyProgressManaRegenBonus(player);
     }
 
     private static void applyManaRegenOverride(Player player) {
@@ -136,6 +142,36 @@ public class ManaAttributeHandler {
         }
         applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_PROGRESS_MODIFIER_ID, "ist_cast_time_reduction_progress", progressValue);
         logger.info("applied progress cast time bonus to {}: {}", player.getName().getString(), progressValue);
+    }
+
+    private static void applyProgressMaxManaBonus(Player player) {
+        int progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                .map(PlayerProgress::getMaxManaBonus)
+                .orElse(0);
+        if (progressValue == 0) {
+            return;
+        }
+        Optional<Attribute> maxManaAttribute = IronsSpellbooksCompat.getMaxManaAttribute();
+        if (maxManaAttribute.isEmpty()) {
+            return;
+        }
+        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_PROGRESS_MODIFIER_ID, "ist_max_mana_progress", progressValue);
+        logger.info("applied progress max mana bonus to {}: {}", player.getName().getString(), progressValue);
+    }
+
+    private static void applyProgressManaRegenBonus(Player player) {
+        double progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                .map(PlayerProgress::getManaRegenBonus)
+                .orElse(0.0);
+        if (progressValue == 0.0) {
+            return;
+        }
+        Optional<Attribute> manaRegenAttribute = IronsSpellbooksCompat.getManaRegenAttribute();
+        if (manaRegenAttribute.isEmpty()) {
+            return;
+        }
+        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_PROGRESS_MODIFIER_ID, "ist_mana_regen_progress", progressValue);
+        logger.info("applied progress mana regen bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
     private static void applyAdditiveOverride(Player player, Attribute attribute, UUID modifierId, String modifierName, double value) {

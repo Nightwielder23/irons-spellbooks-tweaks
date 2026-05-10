@@ -29,6 +29,12 @@ public final class UnlockApplicator {
             if (grants.getCastTimeReductionBonus() != 0.0) {
                 progress.addCastTimeBonus(grants.getCastTimeReductionBonus());
             }
+            if (grants.getMaxManaBonus() != 0) {
+                progress.addMaxManaBonus(grants.getMaxManaBonus());
+            }
+            if (grants.getManaRegenBonus() != 0.0) {
+                progress.addManaRegenBonus(grants.getManaRegenBonus());
+            }
             for (ResourceLocation dimension : grants.getDimensionsRemoved()) {
                 progress.addDimensionRemoved(dimension);
             }

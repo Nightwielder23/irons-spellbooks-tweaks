@@ -15,6 +15,8 @@ public class PlayerProgress {
 
     private static final String KEY_COOLDOWN_BONUS = "cooldown_reduction_bonus";
     private static final String KEY_CAST_TIME_BONUS = "cast_time_reduction_bonus";
+    private static final String KEY_MAX_MANA_BONUS = "max_mana_bonus";
+    private static final String KEY_MANA_REGEN_BONUS = "mana_regen_bonus";
     private static final String KEY_DIMENSIONS_REMOVED = "dimensions_removed";
     private static final String KEY_INSCRIPTIONS_REMOVED = "inscriptions_removed";
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
@@ -31,6 +33,8 @@ public class PlayerProgress {
 
     private double cooldownReductionBonus = 0.0;
     private double castTimeReductionBonus = 0.0;
+    private int maxManaBonus = 0;
+    private double manaRegenBonus = 0.0;
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
@@ -43,6 +47,14 @@ public class PlayerProgress {
 
     public double getCastTimeReductionBonus() {
         return castTimeReductionBonus;
+    }
+
+    public int getMaxManaBonus() {
+        return maxManaBonus;
+    }
+
+    public double getManaRegenBonus() {
+        return manaRegenBonus;
     }
 
     public Set<ResourceLocation> getDimensionsRemoved() {
@@ -67,6 +79,14 @@ public class PlayerProgress {
 
     public void addCastTimeBonus(double amount) {
         castTimeReductionBonus += amount;
+    }
+
+    public void addMaxManaBonus(int amount) {
+        maxManaBonus += amount;
+    }
+
+    public void addManaRegenBonus(double amount) {
+        manaRegenBonus += amount;
     }
 
     public void addDimensionRemoved(ResourceLocation dimension) {
@@ -108,6 +128,8 @@ public class PlayerProgress {
     public void copyFrom(PlayerProgress other) {
         this.cooldownReductionBonus = other.cooldownReductionBonus;
         this.castTimeReductionBonus = other.castTimeReductionBonus;
+        this.maxManaBonus = other.maxManaBonus;
+        this.manaRegenBonus = other.manaRegenBonus;
         this.dimensionsRemoved.clear();
         this.dimensionsRemoved.addAll(other.dimensionsRemoved);
         this.inscriptionsRemoved.clear();
@@ -120,6 +142,8 @@ public class PlayerProgress {
     public void reset() {
         cooldownReductionBonus = 0.0;
         castTimeReductionBonus = 0.0;
+        maxManaBonus = 0;
+        manaRegenBonus = 0.0;
         dimensionsRemoved.clear();
         inscriptionsRemoved.clear();
         grantedUnlocks.clear();
@@ -130,6 +154,8 @@ public class PlayerProgress {
         CompoundTag tag = new CompoundTag();
         tag.putDouble(KEY_COOLDOWN_BONUS, cooldownReductionBonus);
         tag.putDouble(KEY_CAST_TIME_BONUS, castTimeReductionBonus);
+        tag.putInt(KEY_MAX_MANA_BONUS, maxManaBonus);
+        tag.putDouble(KEY_MANA_REGEN_BONUS, manaRegenBonus);
         tag.put(KEY_DIMENSIONS_REMOVED, writeIdSet(dimensionsRemoved));
         tag.put(KEY_INSCRIPTIONS_REMOVED, writeIdSet(inscriptionsRemoved));
         tag.put(KEY_GRANTED_UNLOCKS, writeIdSet(grantedUnlocks));
@@ -143,6 +169,8 @@ public class PlayerProgress {
     public void deserializeNBT(CompoundTag tag) {
         cooldownReductionBonus = tag.contains(KEY_COOLDOWN_BONUS, Tag.TAG_DOUBLE) ? tag.getDouble(KEY_COOLDOWN_BONUS) : 0.0;
         castTimeReductionBonus = tag.contains(KEY_CAST_TIME_BONUS, Tag.TAG_DOUBLE) ? tag.getDouble(KEY_CAST_TIME_BONUS) : 0.0;
+        maxManaBonus = tag.contains(KEY_MAX_MANA_BONUS, Tag.TAG_INT) ? tag.getInt(KEY_MAX_MANA_BONUS) : 0;
+        manaRegenBonus = tag.contains(KEY_MANA_REGEN_BONUS, Tag.TAG_DOUBLE) ? tag.getDouble(KEY_MANA_REGEN_BONUS) : 0.0;
         readIdSet(tag, KEY_DIMENSIONS_REMOVED, dimensionsRemoved);
         readIdSet(tag, KEY_INSCRIPTIONS_REMOVED, inscriptionsRemoved);
         readIdSet(tag, KEY_GRANTED_UNLOCKS, grantedUnlocks);

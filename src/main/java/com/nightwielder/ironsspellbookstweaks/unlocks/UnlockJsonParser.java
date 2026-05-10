@@ -94,11 +94,17 @@ public final class UnlockJsonParser {
         double castTimeReductionBonus = grantsJson.has("cast_time_reduction_bonus")
                 ? grantsJson.get("cast_time_reduction_bonus").getAsDouble()
                 : 0.0;
+        int maxManaBonus = grantsJson.has("max_mana_bonus")
+                ? grantsJson.get("max_mana_bonus").getAsInt()
+                : 0;
+        double manaRegenBonus = grantsJson.has("mana_regen_bonus")
+                ? grantsJson.get("mana_regen_bonus").getAsDouble()
+                : 0.0;
         Set<ResourceLocation> dimensionsRemoved = parseIdList(unlockId, grantsJson, "remove_dimensions");
         Set<ResourceLocation> inscriptionsRemoved = parseIdList(unlockId, grantsJson, "remove_inscriptions");
         String rarityCap = parseRarityCap(unlockId, grantsJson);
 
-        return new UnlockGrants(cooldownReductionBonus, castTimeReductionBonus, dimensionsRemoved, inscriptionsRemoved, rarityCap);
+        return new UnlockGrants(cooldownReductionBonus, castTimeReductionBonus, maxManaBonus, manaRegenBonus, dimensionsRemoved, inscriptionsRemoved, rarityCap);
     }
 
     private static String parseRarityCap(ResourceLocation unlockId, JsonObject grantsJson) {
