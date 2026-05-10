@@ -83,6 +83,8 @@ Each unlock can grant any combination of:
 - `cast_time_reduction_bonus`: add to the player's cast time reduction attribute
 - `remove_dimensions`: exempt the player from the casting dimension blacklist for these dimensions
 - `remove_inscriptions`: exempt the player from the inscription blacklist for these spells
+- `max_mana_bonus`: integer flat addition to the player's MAX_MANA attribute. Stacks across unlocks (cumulative). Negative values subtract.
+- `mana_regen_bonus`: flat addition to the player's MANA_REGEN attribute. Stacks across unlocks (cumulative). Negative values subtract.
 
 ### Optional fields
 
