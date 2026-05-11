@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,6 +55,12 @@ public class ManaRegenCancelHandler {
             return;
         }
         applyDrainback(event.player);
+    }
+
+    // Drop per-player cache entries on logout so long-running servers don't accumulate one Float per ever-joined player.
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        lastKnownMana.remove(event.getEntity().getUUID());
     }
 
     private static void initReflection() {

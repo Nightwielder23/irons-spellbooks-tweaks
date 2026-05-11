@@ -55,6 +55,9 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
                 }
             } catch (JsonParseException parseFailed) {
                 logger.warn("failed to parse unlock {}: {}", id, parseFailed.getMessage());
+            } catch (RuntimeException unexpected) {
+                // Gson's getAsDouble/getAsInt throw NumberFormatException / UnsupportedOperationException, neither of which extend JsonParseException. Without this catch a single bad value would abort the whole datapack reload.
+                logger.warn("failed to parse unlock {}: {}", id, unexpected.getMessage(), unexpected);
             }
         }
         unlocks = Map.copyOf(parsed);

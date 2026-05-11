@@ -30,9 +30,10 @@ public class BlackHoleResistanceHandler {
     // server-thread-only access during entity events and server tick, so a plain HashSet is enough
     private static final Set<BlackHole> activeBlackHoles = new HashSet<>();
 
-    // identity-compared cache so we rebuild only when Forge swaps the underlying list on config reload
-    private static List<? extends String> cachedRawList;
-    private static Map<ResourceLocation, Double> cachedImmunityMap = Map.of();
+    // identity-compared cache so we rebuild only when Forge swaps the underlying list on config reload.
+    // volatile because the config-reload worker writes these while the server thread reads them.
+    private static volatile List<? extends String> cachedRawList;
+    private static volatile Map<ResourceLocation, Double> cachedImmunityMap = Map.of();
 
     // Fully-immune victims get anchored on first sight and teleported back each tick. Motion-scaling alone fails because Iron's pushes during entity tick and vanilla integrates before our ServerTickEvent.END runs.
     private static final Map<UUID, Vec3> anchoredVictims = new HashMap<>();

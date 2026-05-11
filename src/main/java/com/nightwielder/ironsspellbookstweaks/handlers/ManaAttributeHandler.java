@@ -15,12 +15,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Applies configured attribute overrides to players on login. Runs on the Forge bus because per-world server configs are not loaded until after mod-bus events fire.
+// Applies configured attribute overrides to players on login and respawn. Runs on the Forge bus because per-world server configs are not loaded until after mod-bus events fire.
 public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // Stable UUIDs let us replace our own modifiers on relogin instead of stacking duplicates.
+    // Reusing the same UUID per modifier means relogin replaces the existing entry instead of stacking a duplicate.
     private static final UUID MANA_REGEN_MODIFIER_ID = UUID.fromString("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f");
     private static final UUID MAX_MANA_MODIFIER_ID = UUID.fromString("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70");
     private static final UUID COOLDOWN_REDUCTION_MODIFIER_ID = UUID.fromString("5f4cad30-7061-6132-1e4f-3c4d5e6f7081");
@@ -36,7 +36,19 @@ public class ManaAttributeHandler {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        Player player = event.getEntity();
+        applyAll(event.getEntity());
+    }
+
+    // PlayerList.respawn builds a fresh ServerPlayer that does not copy permanent attribute modifiers from the old one, so we reapply on every respawn.
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!IronsSpellbooksCompat.isLoaded()) {
+            return;
+        }
+        applyAll(event.getEntity());
+    }
+
+    private static void applyAll(Player player) {
         applyManaRegenOverride(player);
         applyMaxManaOverride(player);
         applyCooldownReductionBonus(player);
