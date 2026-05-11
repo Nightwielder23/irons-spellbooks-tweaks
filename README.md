@@ -1,6 +1,6 @@
 # Iron's Spellbooks Tweaks
 
-Config tweaks for [Iron's Spells 'n Spellbooks](https://www.curseforge.com/minecraft/mc-mods/irons-spells-n-spellbooks) aimed at modpack makers. Adds TOML knobs Iron's doesn't expose.
+Config tweaks for [Iron's Spells 'n Spellbooks](https://www.curseforge.com/minecraft/mc-mods/irons-spells-n-spellbooks) aimed at modpack makers. Adds TOML config options Iron's doesn't expose.
 
 Soft dependency, no mixins, no access transformers. The mod loads cleanly without Iron's Spellbooks present and does nothing in that case.
 
@@ -65,9 +65,9 @@ blackholeImmunity = ["irons_spellbooks:dead_king:1.0", "minecraft:wither:0.8"]
 ```
 Iron's hardcodes a 30% minimum pull regardless of `KNOCKBACK_RESISTANCE` attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.
 
-## Per-Player Progression Unlocks
+## Per-player progression unlocks
 
-v1.1 adds a datapack-driven unlock system that lets you gate Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
+v1.1 adds a datapack-driven unlock system for gating Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
 
 ### Triggers
 
@@ -129,7 +129,7 @@ Tier-up the player's spell ceiling on a boss kill. With `maxSpellRarity = "rare"
 
 The grant is raise-only, so a later unlock that tries to set `rarity_cap` to `uncommon` would be ignored.
 
-### Commands
+## Commands
 
 OP-only:
 - `/isstweaks grant <player> <unlock_id>`: grant an unlock manually
@@ -150,7 +150,7 @@ Open to all players:
 
 ## For modpack makers
 
-Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All knobs are server-side so clients don't need matching configs.
+Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All settings are server-side so clients don't need matching configs.
 
 Note: progression data is per-world and stored on the player's NBT capability. It survives death and login/logout. Datapack unlock JSONs reload via `/reload`.
 
