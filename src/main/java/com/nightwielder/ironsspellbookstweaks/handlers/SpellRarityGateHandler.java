@@ -19,9 +19,9 @@ public class SpellRarityGateHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/SpellRarityGateHandler");
 
-    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast
-    private static String cachedRawValue;
-    private static SpellRarity cachedThreshold;
+    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast. volatile because config reload runs on a worker thread while spell-cast events run on server main.
+    private static volatile String cachedRawValue;
+    private static volatile SpellRarity cachedThreshold;
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {

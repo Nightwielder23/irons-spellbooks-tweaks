@@ -127,20 +127,6 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
         return grantedUnlocks.contains(unlockId);
     }
 
-    public void copyFrom(PlayerProgress other) {
-        this.cooldownReductionBonus = other.cooldownReductionBonus;
-        this.castTimeReductionBonus = other.castTimeReductionBonus;
-        this.maxManaBonus = other.maxManaBonus;
-        this.manaRegenBonus = other.manaRegenBonus;
-        this.dimensionsRemoved.clear();
-        this.dimensionsRemoved.addAll(other.dimensionsRemoved);
-        this.inscriptionsRemoved.clear();
-        this.inscriptionsRemoved.addAll(other.inscriptionsRemoved);
-        this.grantedUnlocks.clear();
-        this.grantedUnlocks.addAll(other.grantedUnlocks);
-        this.rarityCap = other.rarityCap;
-    }
-
     public void reset() {
         cooldownReductionBonus = 0.0;
         castTimeReductionBonus = 0.0;

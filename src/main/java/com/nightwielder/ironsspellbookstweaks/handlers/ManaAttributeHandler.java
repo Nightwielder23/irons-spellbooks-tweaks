@@ -41,10 +41,19 @@ public class ManaAttributeHandler {
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        applyAll(event.getEntity());
+    }
+
+    // ServerPlayer.restoreFrom only copies attribute base values, not modifiers, so respawned players lose ours.
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        applyAll(event.getEntity());
+    }
+
+    private static void applyAll(Player player) {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        Player player = event.getEntity();
         applyManaRegenOverride(player);
         applyMaxManaOverride(player);
         applyCooldownReductionBonus(player);

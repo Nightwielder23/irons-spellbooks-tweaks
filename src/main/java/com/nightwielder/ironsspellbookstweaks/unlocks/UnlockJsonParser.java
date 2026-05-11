@@ -85,9 +85,6 @@ public final class UnlockJsonParser {
         }
         JsonObject grantsJson = grantsElement.getAsJsonObject();
 
-        if (grantsJson.has("spell_level_cap")) {
-            logger.warn("unlock {} uses 'spell_level_cap' grant, which is no longer supported (replaced by 'rarity_cap'). Ignoring.", unlockId);
-        }
         double cooldownReductionBonus = grantsJson.has("cooldown_reduction_bonus")
                 ? grantsJson.get("cooldown_reduction_bonus").getAsDouble()
                 : 0.0;

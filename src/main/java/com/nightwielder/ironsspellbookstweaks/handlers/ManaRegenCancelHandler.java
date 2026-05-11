@@ -11,6 +11,7 @@ import java.util.UUID;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +29,12 @@ public class ManaRegenCancelHandler {
     private static Method getPlayerMagicDataMethod;
     private static Method getManaMethod;
     private static Method setManaMethod;
+
+    // Without this the cache leaks one entry per unique player UUID over the server's lifetime.
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        lastKnownMana.remove(event.getEntity().getUUID());
+    }
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
