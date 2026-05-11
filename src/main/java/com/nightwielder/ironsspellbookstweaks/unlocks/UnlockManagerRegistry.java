@@ -12,8 +12,4 @@ public class UnlockManagerRegistry {
     public static void onAddReloadListeners(AddReloadListenerEvent event) {
         event.addListener(INSTANCE);
     }
-
-    public static UnlockManager getInstance() {
-        return INSTANCE;
-    }
 }

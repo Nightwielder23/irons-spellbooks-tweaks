@@ -1,4 +1,4 @@
-// Hooks the PlayerProgress capability into player lifecycle: attach on entity creation and copy across respawn.
+// Hooks the PlayerProgress capability into player lifecycle: attach on entity creation and copy across respawn or end-portal return.
 package com.nightwielder.ironsspellbookstweaks.capability;
 
 import net.minecraft.world.entity.Entity;
@@ -17,11 +17,9 @@ public class PlayerProgressEventHandler {
         }
     }
 
+    // Fires on both death respawn (wasDeath=true) and return-from-end (wasDeath=false). Both paths build a fresh Player with empty capabilities, so we copy in either case.
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
-        if (!event.isWasDeath()) {
-            return;
-        }
         Player original = event.getOriginal();
         Player clone = event.getEntity();
         // 1.20.1 invalidates the original entity's caps before this fires, so revive long enough to read them
