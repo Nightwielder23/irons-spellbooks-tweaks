@@ -8,7 +8,7 @@ Soft dependency, no mixins, no access transformers. The mod loads cleanly withou
 
 Iron's Spellbooks exposes `MANA_REGEN_MULTIPLIER`, `MANA_SPAWN_PERCENT`, and a few sword-related options in its serverconfig. There are several open issues asking for more direct control over mana regen and starting mana ([#161](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/161), [#162](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/162), [#391](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/391)) that haven't been addressed.
 
-This mod fills those gaps without touching Iron's serverconfig (which has known multiplayer sync bugs per [#1033](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/1033)). Settings are kept in a separate TOML at `config/irons_spellbooks_tweaks-server.toml` and apply via attribute modifications and runtime hooks on Iron's public events.
+The mod fills those gaps without touching Iron's serverconfig (which has known multiplayer sync bugs per [#1033](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/1033)). Settings are kept in a separate TOML at `config/irons_spellbooks_tweaks-server.toml` and apply via attribute modifications and runtime hooks on Iron's public events.
 
 ## Config
 
@@ -64,6 +64,34 @@ Per-entity-type resistance to black hole pull. Format `"entity_id:strength"` whe
 blackholeImmunity = ["irons_spellbooks:dead_king:1.0", "minecraft:wither:0.8"]
 ```
 Iron's hardcodes a 30% minimum pull regardless of `KNOCKBACK_RESISTANCE` attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.
+
+### `[summons]`
+
+Scales the HP of Iron's summoned mobs and the damage dealt by Summon Swords. A multiplier of `1.0` means no scaling. HP scaling uses a `MULTIPLY_BASE` attribute modifier so it composes with any other mod that already scales mob HP (Apotheosis, ScalingHealth, difficulty mods, etc): a multiplier of `3.0` here always means "3x the base HP Iron's intended for this summon", on top of whatever the pack already does.
+
+**`summonVexHpMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a summoned vex's base HP.
+
+**`summonVexDamageMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a summoned vex's melee damage per hit. `0.0` reduces every hit to zero.
+
+**`raiseDeadHpMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to the base HP of Raise Dead summons. Applies to both summoned skeletons and zombies.
+
+**`raiseDeadDamageMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a Raise Dead summon's melee damage per hit. Applies to both summoned skeletons and zombies. `0.0` reduces every hit to zero.
+
+**`summonPolarBearHpMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a summoned polar bear's base HP. Iron's already scales polar bear base HP with spell level and the caster's spell power before this multiplier is applied.
+
+**`summonPolarBearDamageMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a summoned polar bear's melee damage per hit. `0.0` reduces every hit to zero.
+
+**`summonHorseHpMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to a summoned horse's base HP. Iron's already scales horse base HP with the caster's spell power before this multiplier is applied.
+
+**`summonSwordsDamageMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to Summon Swords damage per hit. `0.0` reduces every hit to zero.
 
 ## Per-player progression unlocks
 
@@ -146,7 +174,7 @@ Open to all players:
 - Minecraft 1.20.1 Forge only (1.20.1 is the only currently-maintained branch of Iron's Spellbooks)
 - Iron's Spells 'n Spellbooks 3.0.0 or later
 - Forge 47.2.0 or later
-- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, `AttachCapabilitiesEvent`, `PlayerEvent.Clone`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
+- No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `LivingHurtEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, `AttachCapabilitiesEvent`, `PlayerEvent.Clone`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 

@@ -9,6 +9,7 @@ import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.SummonScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.AdvancementUnlockHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.EntityKillUnlockHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.RetroactiveUnlockHandler;
@@ -43,6 +44,7 @@ public class IronsSpellbooksTweaks {
             MinecraftForge.EVENT_BUS.register(SpellRarityGateHandler.class);
             MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
             MinecraftForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
+            MinecraftForge.EVENT_BUS.register(SummonScalingHandler.class);
         }
         MinecraftForge.EVENT_BUS.register(PlayerProgressEventHandler.class);
         MinecraftForge.EVENT_BUS.register(UnlockManagerRegistry.class);
