@@ -95,7 +95,7 @@ Multiplier applied to Summon Swords damage per hit. `0.0` reduces every hit to z
 
 ## Per-player progression unlocks
 
-v1.1 adds a datapack-driven unlock system for gating Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
+A datapack-driven unlock system gates Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
 
 ### Triggers
 
@@ -109,10 +109,10 @@ Each unlock can grant any combination of:
 - `rarity_cap`: raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with `maxSpellRarity` config, the effective ceiling is whichever is looser. Raise-only, a later unlock can never tighten an earlier loosening.
 - `cooldown_reduction_bonus`: add to the player's cooldown reduction attribute
 - `cast_time_reduction_bonus`: add to the player's cast time reduction attribute
-- `remove_dimensions`: exempt the player from the casting dimension blacklist for these dimensions
-- `remove_inscriptions`: exempt the player from the inscription blacklist for these spells
 - `max_mana_bonus`: integer flat addition to the player's MAX_MANA attribute. Stacks across unlocks (cumulative). Negative values subtract.
 - `mana_regen_bonus`: flat addition to the player's MANA_REGEN attribute. Stacks across unlocks (cumulative). Negative values subtract.
+- `remove_dimensions`: exempt the player from the casting dimension blacklist for these dimensions
+- `remove_inscriptions`: exempt the player from the inscription blacklist for these spells
 
 ### Optional fields
 
@@ -171,9 +171,9 @@ Open to all players:
 
 ## Compatibility
 
-- Minecraft 1.20.1 Forge only (1.20.1 is the only currently-maintained branch of Iron's Spellbooks)
-- Iron's Spells 'n Spellbooks 3.0.0 or later
-- Forge 47.2.0 or later
+- Minecraft 1.20.1 Forge and 1.21.1 NeoForge (this branch is 1.20.1)
+- Iron's Spells 'n Spellbooks 3.0.0 or later (1.20.1) or 1.21.1-3.15.0 or later (1.21.1)
+- Forge 47.2.0 or later (1.20.1) or NeoForge 21.1.221 or later (1.21.1)
 - No conflicts expected with other Iron's addons. The mod hooks `PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `LivingHurtEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent`, `AttachCapabilitiesEvent`, `PlayerEvent.Clone`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
