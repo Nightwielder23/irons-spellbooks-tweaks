@@ -95,7 +95,7 @@ Multiplier applied to Summon Swords damage per hit. `0.0` reduces every hit to z
 
 ## Per-player progression unlocks
 
-A datapack-driven unlock system lets you gate Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
+A datapack-driven unlock system gates Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
 
 ### Triggers
 
@@ -171,14 +171,14 @@ Open to all players:
 
 ## Compatibility
 
-- Minecraft 1.21.1 NeoForge only (1.21.1 is the only currently-maintained branch of Iron's Spellbooks)
-- Iron's Spells 'n Spellbooks 3.15.0 or later
-- NeoForge 21.1.221 or later
+- Minecraft 1.20.1 Forge and 1.21.1 NeoForge (this branch is 1.21.1)
+- Iron's Spells 'n Spellbooks 3.0.0 or later (1.20.1) or 1.21.1-3.15.0 or later (1.21.1)
+- Forge 47.2.0 or later (1.20.1) or NeoForge 21.1.221 or later (1.21.1)
 - No conflicts expected with other Iron's addons. The mod hooks `PlayerEvent.PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent.Post`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `LivingIncomingDamageEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent.Post`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 
-Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All options are server-side so clients don't need matching configs.
+Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All settings are server-side so clients don't need matching configs.
 
 Note: progression data is per-world and stored as a NeoForge data attachment on the player's NBT. It survives death and login/logout. Datapack unlock JSONs reload via `/reload`.
 
