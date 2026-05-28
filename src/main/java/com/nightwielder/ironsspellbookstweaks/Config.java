@@ -15,6 +15,14 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> MAX_SPELL_RARITY;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> BLACKHOLE_IMMUNITY;
+    public static final ModConfigSpec.DoubleValue SUMMON_VEX_HP_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUMMON_VEX_DAMAGE_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue RAISE_DEAD_HP_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue RAISE_DEAD_DAMAGE_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUMMON_POLAR_BEAR_HP_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUMMON_POLAR_BEAR_DAMAGE_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUMMON_HORSE_HP_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUMMON_SWORDS_DAMAGE_MULTIPLIER;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -52,6 +60,32 @@ public class Config {
         BLACKHOLE_IMMUNITY = builder
                 .comment("Per-entity-type resistance to black hole pull. Format: \"entity_id:strength\" where strength is 0.0 (no effect) to 1.0 (fully immune). Iron's hardcodes a 0.3 minimum pull regardless of KNOCKBACK_RESISTANCE attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.")
                 .defineList("blackholeImmunity", List.of(), entry -> entry instanceof String);
+        builder.pop();
+        builder.push("summons");
+        SUMMON_VEX_HP_MULTIPLIER = builder
+                .comment("Multiplier applied to a summoned vex's base HP. 1.0 leaves HP unchanged. Stacks multiplicatively with any HP scaling another mod applies (Apotheosis-style scalers, difficulty mods, etc).")
+                .defineInRange("summonVexHpMultiplier", 1.0, 0.0, 10.0);
+        SUMMON_VEX_DAMAGE_MULTIPLIER = builder
+                .comment("Multiplier applied to a summoned vex's melee damage per hit. 1.0 leaves damage unchanged. 0.0 reduces every hit to zero.")
+                .defineInRange("summonVexDamageMultiplier", 1.0, 0.0, 10.0);
+        RAISE_DEAD_HP_MULTIPLIER = builder
+                .comment("Multiplier applied to the base HP of Raise Dead summons. 1.0 leaves HP unchanged. Applies to both summoned skeletons and zombies.")
+                .defineInRange("raiseDeadHpMultiplier", 1.0, 0.0, 10.0);
+        RAISE_DEAD_DAMAGE_MULTIPLIER = builder
+                .comment("Multiplier applied to a Raise Dead summon's melee damage per hit. 1.0 leaves damage unchanged. 0.0 reduces every hit to zero. Applies to both summoned skeletons and zombies.")
+                .defineInRange("raiseDeadDamageMultiplier", 1.0, 0.0, 10.0);
+        SUMMON_POLAR_BEAR_HP_MULTIPLIER = builder
+                .comment("Multiplier applied to a summoned polar bear's base HP. 1.0 leaves HP unchanged. Iron's already scales polar bear base HP with spell level and spell power before this multiplier is applied.")
+                .defineInRange("summonPolarBearHpMultiplier", 1.0, 0.0, 10.0);
+        SUMMON_POLAR_BEAR_DAMAGE_MULTIPLIER = builder
+                .comment("Multiplier applied to a summoned polar bear's melee damage per hit. 1.0 leaves damage unchanged. 0.0 reduces every hit to zero.")
+                .defineInRange("summonPolarBearDamageMultiplier", 1.0, 0.0, 10.0);
+        SUMMON_HORSE_HP_MULTIPLIER = builder
+                .comment("Multiplier applied to a summoned horse's base HP. 1.0 leaves HP unchanged. Iron's already scales horse base HP with spell power before this multiplier is applied.")
+                .defineInRange("summonHorseHpMultiplier", 1.0, 0.0, 10.0);
+        SUMMON_SWORDS_DAMAGE_MULTIPLIER = builder
+                .comment("Multiplier applied to Summon Swords damage per hit. 1.0 leaves damage unchanged. 0.0 reduces every hit to zero.")
+                .defineInRange("summonSwordsDamageMultiplier", 1.0, 0.0, 10.0);
         builder.pop();
         SERVER_SPEC = builder.build();
     }

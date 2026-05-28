@@ -5,6 +5,7 @@ import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandle
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.SummonScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -31,9 +32,10 @@ public class IronsSpellbooksTweaks {
             NeoForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
             NeoForge.EVENT_BUS.register(SpellRarityGateHandler.class);
             NeoForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
+            NeoForge.EVENT_BUS.register(SummonScalingHandler.class);
             logger.info("Iron's Spellbooks Tweaks loaded with Iron's integration");
         } else {
-            logger.info("Iron's Spellbooks not detected, gated handlers (inscription, dimension, rarity, black hole) will not be registered");
+            logger.info("Iron's Spellbooks not detected, gated handlers (inscription, dimension, rarity, black hole, summons) will not be registered");
         }
     }
 }
