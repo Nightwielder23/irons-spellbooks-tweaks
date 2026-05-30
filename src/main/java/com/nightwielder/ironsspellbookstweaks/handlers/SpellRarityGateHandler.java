@@ -1,4 +1,4 @@
-// Cancels player spell casts whose minimum rarity is above the effective ceiling. Ceiling is the looser of the config gate and the player's per-player cap. Mob casters are unaffected because SpellPreCastEvent is a PlayerEvent.
+// blocks player casts whose min rarity is over the ceiling (looser of the config gate and the player's own cap). mobs arent affected since SpellPreCastEvent is player-only.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
@@ -19,7 +19,8 @@ public class SpellRarityGateHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/SpellRarityGateHandler");
 
-    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast. volatile because config reload runs on a worker thread while spell-cast events run on server main.
+    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast.
+    // volatile because the config-reload worker writes these while the server thread reads them.
     private static volatile String cachedRawValue;
     private static volatile SpellRarity cachedThreshold;
 
@@ -47,7 +48,7 @@ public class SpellRarityGateHandler {
         }
     }
 
-    // Higher-tier value means the gate is looser (allows more rarities through). Player cap raises the ceiling above whatever config says.
+    // higher tier = looser gate. player cap can only raise the ceiling, never lower it.
     private static SpellRarity looserOf(SpellRarity a, SpellRarity b) {
         if (a == null) {
             return b;
@@ -81,7 +82,7 @@ public class SpellRarityGateHandler {
         }
     }
 
-    // PlayerProgress stores the rarity name as a string to avoid pulling Iron's into the attachment layer, so we parse it here at the comparison site
+    // cap is stored as a string to keep Iron's out of the attachment layer. parse to enum here.
     private static SpellRarity parseRarity(String name) {
         if (name == null) {
             return null;

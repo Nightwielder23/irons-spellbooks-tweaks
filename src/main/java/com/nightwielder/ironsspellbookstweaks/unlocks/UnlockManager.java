@@ -56,7 +56,7 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
             } catch (JsonParseException parseFailed) {
                 logger.warn("failed to parse unlock {}: {}", id, parseFailed.getMessage());
             } catch (RuntimeException unexpected) {
-                // Gson getAsDouble/getAsInt throw NumberFormatException or UnsupportedOperationException for wrong-type values; without this catch a single bad file would kill the whole reload and take all other unlocks down with it.
+                // gson throws NumberFormatException or UnsupportedOperationException on wrong-type values, neither is a JsonParseException. without this catch one bad file kills the whole reload.
                 logger.warn("failed to parse unlock {}: {}", id, unexpected.toString(), unexpected);
             }
         }

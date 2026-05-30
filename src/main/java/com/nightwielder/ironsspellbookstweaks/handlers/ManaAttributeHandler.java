@@ -1,4 +1,4 @@
-// Applies configured attribute overrides to players on login.
+// Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
@@ -24,7 +24,7 @@ public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // Stable ResourceLocation keys let us replace our own modifiers on relogin instead of stacking duplicates.
+    // reusing the same ResourceLocation per modifier so relogin replaces our entry instead of stacking a duplicate
     private static final ResourceLocation MANA_REGEN_OVERRIDE_ID = id("ist_mana_regen_override");
     private static final ResourceLocation MAX_MANA_OVERRIDE_ID = id("ist_max_mana_override");
     private static final ResourceLocation COOLDOWN_REDUCTION_BONUS_ID = id("ist_cooldown_reduction_bonus");
@@ -44,7 +44,7 @@ public class ManaAttributeHandler {
         applyAll(event.getEntity());
     }
 
-    // ServerPlayer.restoreFrom only copies attribute base values, not modifiers, so respawned players lose ours.
+    // restoreFrom only copies attribute base values, not modifiers. so respawned players lose ours.
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         applyAll(event.getEntity());

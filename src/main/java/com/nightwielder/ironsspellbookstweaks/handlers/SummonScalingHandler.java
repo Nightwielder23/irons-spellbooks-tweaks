@@ -91,9 +91,8 @@ public class SummonScalingHandler {
             }
             return;
         }
-        // Iron's builds summon melee with getDamageSource(summon, summoner), putting the summon in the direct-entity
-        // slot and the player in the causing-entity slot. getEntity() returns the causing entity (the player), so we
-        // read getDirectEntity() to see the summon that actually swung.
+        // Iron's summon melee uses getDamageSource(summon, summoner). summon goes in the direct-entity slot, player in the causing-entity slot.
+        // getEntity() gives the player so we read getDirectEntity() to get the summon that actually swung.
         Entity attacker = event.getSource().getDirectEntity();
         if (attacker == null) {
             return;
@@ -134,8 +133,8 @@ public class SummonScalingHandler {
         }
         AttributeModifier scaling;
         if (multiplier <= 0.0) {
-            // ADD_MULTIPLIED_BASE of -1 would zero the base contribution but leave other ADD_VALUE modifiers, so HP could
-            // still drift above 1. ADD_VALUE of (1 - base) pins the base+ours sum to 1, the closest stable "alive floor".
+            // ADD_MULTIPLIED_BASE of -1 zeroes the base but other ADD_VALUE modifiers can still drift HP above 1.
+            // so ADD_VALUE of (1 - base) pins base+ours to 1. closest stable alive floor.
             double pinDelta = 1.0 - maxHealth.getBaseValue();
             scaling = new AttributeModifier(HP_SCALING_MODIFIER_ID, pinDelta, AttributeModifier.Operation.ADD_VALUE);
         } else {
@@ -226,7 +225,7 @@ public class SummonScalingHandler {
         }
     }
 
-    // Immutable snapshot of the [summons] config block, taken when the config first loads and again after a reload.
+    // snapshot of the [summons] config. rebuilt on reload.
     private static final class ScalingConfig {
         final double vexHpMultiplier;
         final double vexDamageMultiplier;

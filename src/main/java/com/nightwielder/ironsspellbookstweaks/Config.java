@@ -48,18 +48,18 @@ public class Config {
         builder.push("restrictions");
         SPELL_CASTING_DISABLED_DIMENSIONS = builder
                 .comment("Dimensions where spell casting is fully blocked. List of dimension IDs like \"minecraft:nether\" or \"twilightforest:twilight_forest\". Empty list disables this feature. Affects players only, not mob casters.")
-                .defineList("spellCastingDisabledDimensions", List.of(), entry -> entry instanceof String);
+                .defineList("spellCastingDisabledDimensions", List.of(), () -> "", entry -> entry instanceof String);
         MAX_SPELL_RARITY = builder
                 .comment("Highest spell rarity players are allowed to cast. Spells with a higher minimum rarity are blocked. Valid values: common, uncommon, rare, epic, legendary, or empty to disable. For example, 'uncommon' allows common and uncommon spells but blocks rare, epic, and legendary. 'legendary' allows everything. Mob casters are not affected.")
                 .define("maxSpellRarity", "");
         INSCRIPTION_BLACKLIST = builder
                 .comment("Spell IDs that cannot be inscribed at the inscription table. List of spell IDs like \"irons_spellbooks:fireball\". Empty list disables this feature. Players will see their inscription cancelled silently.")
-                .defineList("inscriptionBlacklist", List.of(), entry -> entry instanceof String);
+                .defineList("inscriptionBlacklist", List.of(), () -> "", entry -> entry instanceof String);
         builder.pop();
         builder.push("blackhole");
         BLACKHOLE_IMMUNITY = builder
                 .comment("Per-entity-type resistance to black hole pull. Format: \"entity_id:strength\" where strength is 0.0 (no effect) to 1.0 (fully immune). Iron's hardcodes a 0.3 minimum pull regardless of KNOCKBACK_RESISTANCE attribute, so this exists to push past that floor for specific bosses. Affects black hole only, not other movement spells or vanilla knockback.")
-                .defineList("blackholeImmunity", List.of(), entry -> entry instanceof String);
+                .defineList("blackholeImmunity", List.of(), () -> "", entry -> entry instanceof String);
         builder.pop();
         builder.push("summons");
         SUMMON_VEX_HP_MULTIPLIER = builder

@@ -24,7 +24,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
     private static final String KEY_RARITY_CAP = "rarity_cap";
 
-    // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs and the attachment layer keeps loading when the soft-dep is absent.
+    // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs, that way the attachment layer still loads when the soft-dep is absent.
     public static final Map<String, Integer> RARITY_RANKS = Map.of(
             "COMMON", 0,
             "UNCOMMON", 1,
@@ -40,7 +40,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
-    // null means no per-player gate, callers fall back to config
+    // null means no per-player rarity gate, callers fall back to config. stored as the uppercase rarity name so this class never touches SpellRarity directly.
     private String rarityCap = null;
 
     public double getCooldownReductionBonus() {
@@ -118,7 +118,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
         return grantedUnlocks.add(unlockId);
     }
 
-    // only clears the granted-set membership, cumulative bonuses stay applied since we can't trace which value came from which unlock
+    // just drops the granted-set entry. the bonuses stay applied since we cant trace which value came from which unlock
     public boolean removeUnlockGranted(ResourceLocation unlockId) {
         return grantedUnlocks.remove(unlockId);
     }
