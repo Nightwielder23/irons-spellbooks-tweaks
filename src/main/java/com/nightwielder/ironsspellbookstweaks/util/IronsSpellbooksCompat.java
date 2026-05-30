@@ -6,7 +6,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
-// Runtime lookup of Iron's Spellbooks attributes by registry name. Lets us soft-depend without compiling against their jar.
+// Runtime lookup of Iron's Spellbooks attributes by registry name, so we can soft-depend without compiling against their jar.
 public class IronsSpellbooksCompat {
 
     public static final String IRONS_MOD_ID = "irons_spellbooks";

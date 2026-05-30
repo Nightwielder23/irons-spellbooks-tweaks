@@ -3,7 +3,6 @@ package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -13,9 +12,6 @@ public class SpellCastDimensionHandler {
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         List<? extends String> blockedDimensions = Config.SPELL_CASTING_DISABLED_DIMENSIONS.get();
         if (blockedDimensions.isEmpty()) {
             return;

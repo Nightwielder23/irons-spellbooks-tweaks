@@ -42,7 +42,7 @@ public class SummonScalingHandler {
     private static Method spellAccessor;
     private static Method getSpellIdAccessor;
 
-    // identity-compared sentinel so the config snapshot rebuilds only when Forge swaps the backing values on a reload.
+    // identity-compared sentinel so the config snapshot rebuilds only when the config layer swaps the backing values on a reload.
     // volatile because the config-reload worker writes these while the server thread reads them.
     private static volatile Double cachedSentinel;
     private static volatile ScalingConfig cachedConfig;
@@ -87,9 +87,8 @@ public class SummonScalingHandler {
             }
             return;
         }
-        // Iron's builds summon melee with getDamageSource(summon, summoner), putting the summon in the direct-entity
-        // slot and the player in the causing-entity slot. getEntity() returns the causing entity (the player), so we
-        // read getDirectEntity() to see the summon that actually swung.
+        // Iron's summon melee uses getDamageSource(summon, summoner). summon goes in the direct-entity slot, player in the causing-entity slot.
+        // getEntity() gives the player so we read getDirectEntity() to get the summon that actually swung.
         Entity attacker = event.getSource().getDirectEntity();
         if (attacker == null) {
             return;
@@ -130,8 +129,8 @@ public class SummonScalingHandler {
         }
         AttributeModifier scaling;
         if (multiplier <= 0.0) {
-            // MULTIPLY_BASE of -1 would zero the base contribution but leave other ADDITION modifiers, so HP could
-            // still drift above 1. ADDITION of (1 - base) pins the base+ours sum to 1, the closest stable "alive floor".
+            // MULTIPLY_BASE of -1 zeroes the base but other ADDITION modifiers can still drift HP above 1.
+            // so ADDITION of (1 - base) pins base+ours to 1. closest stable alive floor.
             double pinDelta = 1.0 - maxHealth.getBaseValue();
             scaling = new AttributeModifier(HP_SCALING_MODIFIER_ID, "isstweaks_summon_hp_scaling", pinDelta, AttributeModifier.Operation.ADDITION);
         } else {
@@ -222,7 +221,7 @@ public class SummonScalingHandler {
         }
     }
 
-    // Immutable snapshot of the [summons] config block, taken when the config first loads and again after a reload.
+    // snapshot of the [summons] config. rebuilt on reload.
     private static final class ScalingConfig {
         final double vexHpMultiplier;
         final double vexDamageMultiplier;

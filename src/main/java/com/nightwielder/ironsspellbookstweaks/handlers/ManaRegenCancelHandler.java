@@ -1,3 +1,4 @@
+// Drainback for disableManaRegen. Iron's regen does not fire a cancellable event so we sample mana per tick and undo any positive delta. Reflection-bound to MagicData on first use.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
@@ -13,7 +14,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Drainback for disableManaRegen. Iron's regen does not fire a cancellable event so we sample mana per tick and undo any positive delta. Reflection-bound to MagicData on first use.
 public class ManaRegenCancelHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaRegenCancelHandler");

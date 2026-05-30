@@ -1,10 +1,9 @@
-// Cancels player spell casts whose minimum rarity is above the effective ceiling. Ceiling is the looser of the config gate and the player's per-player cap. Mob casters are unaffected because SpellPreCastEvent is a PlayerEvent.
+// blocks player casts whose min rarity is over the ceiling (looser of the config gate and the player's own cap). mobs arent affected since SpellPreCastEvent is player-only.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import io.redspace.ironsspellbooks.api.config.SpellConfigManager;
 import io.redspace.ironsspellbooks.api.config.SpellConfigParameter;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
@@ -27,9 +26,6 @@ public class SpellRarityGateHandler {
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         SpellRarity configThreshold = getConfigThreshold();
         Player player = event.getEntity();
         // resolve() converts LazyOptional to plain Optional so a null mapped value does not blow up Optional.of inside LazyOptional.map
@@ -56,7 +52,7 @@ public class SpellRarityGateHandler {
         }
     }
 
-    // Higher-tier value means the gate is looser (allows more rarities through). Player cap raises the ceiling above whatever config says.
+    // higher tier = looser gate. player cap can only raise the ceiling, never lower it.
     private static SpellRarity looserOf(SpellRarity a, SpellRarity b) {
         if (a == null) {
             return b;
@@ -90,7 +86,7 @@ public class SpellRarityGateHandler {
         }
     }
 
-    // PlayerProgress stores the rarity name as a string to avoid pulling Iron's into the capability layer, so we parse it here at the comparison site
+    // cap is stored as a string to keep Iron's out of the capability layer. parse to enum here.
     private static SpellRarity parseRarity(String name) {
         if (name == null) {
             return null;

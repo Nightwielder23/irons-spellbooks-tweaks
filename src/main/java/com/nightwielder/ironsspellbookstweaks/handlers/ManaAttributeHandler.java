@@ -1,3 +1,4 @@
+// Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
@@ -15,12 +16,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// Applies configured attribute overrides to players on login and respawn. Runs on the Forge bus because per-world server configs are not loaded until after mod-bus events fire.
 public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // Reusing the same UUID per modifier means relogin replaces the existing entry instead of stacking a duplicate.
+    // reusing the same UUID per modifier so relogin replaces our entry instead of stacking a duplicate
     private static final UUID MANA_REGEN_MODIFIER_ID = UUID.fromString("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f");
     private static final UUID MAX_MANA_MODIFIER_ID = UUID.fromString("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70");
     private static final UUID COOLDOWN_REDUCTION_MODIFIER_ID = UUID.fromString("5f4cad30-7061-6132-1e4f-3c4d5e6f7081");
@@ -39,7 +39,7 @@ public class ManaAttributeHandler {
         applyAll(event.getEntity());
     }
 
-    // PlayerList.respawn builds a fresh ServerPlayer that does not copy permanent attribute modifiers from the old one, so we reapply on every respawn.
+    // respawn builds a fresh ServerPlayer without our permanent modifiers. so reapply each respawn.
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!IronsSpellbooksCompat.isLoaded()) {
@@ -191,11 +191,8 @@ public class ManaAttributeHandler {
         if (instance == null) {
             return;
         }
-        // remove any prior version of our modifier so changing the config + re-logging in actually updates the value
-        AttributeModifier existing = instance.getModifier(modifierId);
-        if (existing != null) {
-            instance.removeModifier(modifierId);
-        }
+        // drop any prior copy of our modifier so config edits take on relogin; removeModifier is null-safe
+        instance.removeModifier(modifierId);
         AttributeModifier modifier = new AttributeModifier(modifierId, modifierName, value, AttributeModifier.Operation.ADDITION);
         instance.addPermanentModifier(modifier);
     }

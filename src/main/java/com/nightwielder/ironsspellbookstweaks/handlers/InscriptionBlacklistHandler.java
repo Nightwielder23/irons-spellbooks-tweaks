@@ -3,7 +3,6 @@ package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -13,9 +12,6 @@ public class InscriptionBlacklistHandler {
 
     @SubscribeEvent
     public static void onInscribeSpell(InscribeSpellEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         List<? extends String> blacklist = Config.INSCRIPTION_BLACKLIST.get();
         if (blacklist.isEmpty()) {
             return;

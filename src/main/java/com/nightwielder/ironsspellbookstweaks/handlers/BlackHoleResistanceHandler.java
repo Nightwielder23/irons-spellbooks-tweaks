@@ -1,4 +1,4 @@
-// Counters Iron's BlackHole pull on configured mobs. Fully-immune entries anchor the victim to a locked position; partial entries scale deltaMovement. We track black holes via entity-join/leave events so we don't scan every level every tick.
+// counters Iron's black hole pull on configured mobs. full immunity pins the victim in place, partial just scales deltaMovement. we follow black holes via entity join/leave events so we dont scan every level each tick.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.Config;
@@ -18,6 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +31,7 @@ public class BlackHoleResistanceHandler {
     // server-thread-only access during entity events and server tick, so a plain HashSet is enough
     private static final Set<BlackHole> activeBlackHoles = new HashSet<>();
 
-    // identity-compared cache so we rebuild only when Forge swaps the underlying list on config reload.
+    // identity-compared cache so we rebuild only when the config layer swaps the underlying list on a reload.
     // volatile because the config-reload worker writes these while the server thread reads them.
     private static volatile List<? extends String> cachedRawList;
     private static volatile Map<ResourceLocation, Double> cachedImmunityMap = Map.of();
@@ -88,6 +89,13 @@ public class BlackHoleResistanceHandler {
         anchoredVictims.keySet().retainAll(currentTickAnchored);
     }
 
+    // clear tracked state on shutdown so black holes from a closed world don't linger into the next one we load
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        activeBlackHoles.clear();
+        anchoredVictims.clear();
+    }
+
     private static void scaleVictimsForBlackHole(BlackHole blackHole, Map<ResourceLocation, Double> immunityMap, Set<UUID> currentTickAnchored) {
         Level level = blackHole.level();
         float radius = blackHole.getRadius();
@@ -118,7 +126,7 @@ public class BlackHoleResistanceHandler {
         UUID victimId = victim.getUUID();
         Vec3 anchor = anchoredVictims.get(victimId);
         if (anchor == null) {
-            // lock to current position; the victim has already been displaced one tick by Iron's push, but subsequent ticks pin them here
+            // lock to current pos. Iron's already shoved them a tick. we pin them here from now on.
             anchor = victim.position();
             anchoredVictims.put(victimId, anchor);
         }

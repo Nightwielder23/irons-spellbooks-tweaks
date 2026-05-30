@@ -22,7 +22,7 @@ public class PlayerProgress {
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
     private static final String KEY_RARITY_CAP = "rarity_cap";
 
-    // Hardcoded rank order matches Iron's SpellRarity enum so this class can do raise-only comparisons without importing Iron's. Keeping PlayerProgress free of Iron's class refs is what lets the capability layer load when the soft-dep is missing.
+    // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs, that way the capability layer still loads when the soft-dep is absent.
     public static final Map<String, Integer> RARITY_RANKS = Map.of(
             "COMMON", 0,
             "UNCOMMON", 1,
@@ -38,7 +38,7 @@ public class PlayerProgress {
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
-    // null means no per-player rarity gate, callers fall back to config. Stored as the rarity name (uppercase) so this class never references SpellRarity directly.
+    // null means no per-player rarity gate, callers fall back to config. stored as the uppercase rarity name so this class never touches SpellRarity directly.
     private String rarityCap = null;
 
     public double getCooldownReductionBonus() {
@@ -116,7 +116,7 @@ public class PlayerProgress {
         return grantedUnlocks.add(unlockId);
     }
 
-    // only clears the granted-set membership, cumulative bonuses stay applied since we can't trace which value came from which unlock
+    // just drops the granted-set entry. the bonuses stay applied since we cant trace which value came from which unlock
     public boolean removeUnlockGranted(ResourceLocation unlockId) {
         return grantedUnlocks.remove(unlockId);
     }
