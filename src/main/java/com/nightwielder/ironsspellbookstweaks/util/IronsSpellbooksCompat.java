@@ -6,7 +6,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
-// Runtime lookup of Iron's Spellbooks attributes by registry name, so we can soft-depend without compiling against their jar.
+// Looks up Iron's Spellbooks attributes by registry name at runtime so the mod can soft-depend without compiling against their jar.
 public class IronsSpellbooksCompat {
 
     public static final String IRONS_MOD_ID = "irons_spellbooks";
@@ -29,5 +29,9 @@ public class IronsSpellbooksCompat {
 
     public static Optional<Attribute> getCastTimeReductionAttribute() {
         return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "cast_time_reduction")));
+    }
+
+    public static Optional<Attribute> getSpellPowerAttribute() {
+        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "spell_power")));
     }
 }

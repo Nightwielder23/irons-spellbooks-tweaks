@@ -4,10 +4,13 @@ import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressEventHandler;
 import com.nightwielder.ironsspellbookstweaks.command.ISSTweaksCommandRegistry;
 import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.BuffDurationHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.ConfigOverrideHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.SpellPowerMultiplierHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SummonScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.unlocks.AdvancementUnlockHandler;
@@ -38,6 +41,8 @@ public class IronsSpellbooksTweaks {
 
         MinecraftForge.EVENT_BUS.register(ManaAttributeHandler.class);
         MinecraftForge.EVENT_BUS.register(ManaRegenCancelHandler.class);
+        MinecraftForge.EVENT_BUS.register(ConfigOverrideHandler.class);
+        MinecraftForge.EVENT_BUS.register(BuffDurationHandler.class);
         // gated on Iron's presence because these handlers reference Iron's event types in their @SubscribeEvent parameter signatures, which Forge resolves at registration time before any runtime isLoaded check could intercept
         if (IronsSpellbooksCompat.isLoaded()) {
             MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
@@ -45,6 +50,7 @@ public class IronsSpellbooksTweaks {
             MinecraftForge.EVENT_BUS.register(InscriptionBlacklistHandler.class);
             MinecraftForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
             MinecraftForge.EVENT_BUS.register(SummonScalingHandler.class);
+            MinecraftForge.EVENT_BUS.register(SpellPowerMultiplierHandler.class);
         }
         MinecraftForge.EVENT_BUS.register(PlayerProgressEventHandler.class);
         MinecraftForge.EVENT_BUS.register(UnlockManagerRegistry.class);
@@ -52,7 +58,8 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(RetroactiveUnlockHandler.class);
         MinecraftForge.EVENT_BUS.register(EntityKillUnlockHandler.class);
         MinecraftForge.EVENT_BUS.register(ISSTweaksCommandRegistry.class);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
+        // Register as COMMON so the toml writes to the global config folder instead of per-world serverconfig.
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SERVER_SPEC, "irons_spellbooks_tweaks-server.toml");
         logger.info("Iron's Spellbooks Tweaks loaded");
         if (!IronsSpellbooksCompat.isLoaded()) {
             logger.warn("Iron's Spellbooks not detected, all handlers will no-op");

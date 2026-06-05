@@ -22,7 +22,7 @@ public class PlayerProgress {
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
     private static final String KEY_RARITY_CAP = "rarity_cap";
 
-    // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs, that way the capability layer still loads when the soft-dep is absent.
+    // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs; the capability layer then loads even when the soft-dep is absent.
     public static final Map<String, Integer> RARITY_RANKS = Map.of(
             "COMMON", 0,
             "UNCOMMON", 1,
@@ -38,7 +38,7 @@ public class PlayerProgress {
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
-    // null means no per-player rarity gate, callers fall back to config. stored as the uppercase rarity name so this class never touches SpellRarity directly.
+    // null means no per-player rarity gate, so callers fall back to config. stored as the uppercase rarity name so this class never touches SpellRarity directly.
     private String rarityCap = null;
 
     public double getCooldownReductionBonus() {
@@ -97,7 +97,7 @@ public class PlayerProgress {
         inscriptionsRemoved.add(spellId);
     }
 
-    // raise-only so a later unlock with a stricter cap can't tighten an earlier loosening
+    // Only raises the cap so a later unlock with a stricter cap can't tighten an earlier loosening
     public void raiseRarityCap(String newCap) {
         if (newCap == null) {
             return;
@@ -116,7 +116,7 @@ public class PlayerProgress {
         return grantedUnlocks.add(unlockId);
     }
 
-    // just drops the granted-set entry. the bonuses stay applied since we cant trace which value came from which unlock
+    // Drops the granted-set entry only. The bonuses stay applied because there is no way to trace which value came from which unlock
     public boolean removeUnlockGranted(ResourceLocation unlockId) {
         return grantedUnlocks.remove(unlockId);
     }
@@ -177,7 +177,7 @@ public class PlayerProgress {
         rarityCap = readRarityCap(tag);
     }
 
-    // unknown rarity names get dropped so a save from a future Iron's version with extra rarities doesn't poison our state
+    // unknown rarity names get dropped so a save from a future Iron's version with extra rarities doesn't poison the stored state
     private static String readRarityCap(CompoundTag tag) {
         if (!tag.contains(KEY_RARITY_CAP, Tag.TAG_STRING)) {
             return null;

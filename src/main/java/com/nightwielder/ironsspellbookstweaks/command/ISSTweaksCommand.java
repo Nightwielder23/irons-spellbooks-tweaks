@@ -109,7 +109,7 @@ public class ISSTweaksCommand {
                 source.sendSuccess(() -> Component.literal(""), false);
             }
             first = false;
-            // LazyOptional has no ifPresentOrElse, resolve() promotes it to a plain Optional
+            // LazyOptional has no ifPresentOrElse, so resolve() promotes it to a plain Optional
             player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).resolve().ifPresentOrElse(progress -> {
                 source.sendSuccess(() -> Component.literal("isstweaks status for " + player.getName().getString() + ":"), false);
                 source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap())), false);

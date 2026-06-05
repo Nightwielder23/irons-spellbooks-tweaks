@@ -17,7 +17,7 @@ public class PlayerProgressEventHandler {
         }
     }
 
-    // Fires on both death respawn (wasDeath=true) and return-from-end (wasDeath=false). Both paths build a fresh Player with empty capabilities, so we copy in either case.
+    // Fires on both death respawn (wasDeath=true) and return-from-end (wasDeath=false). Both paths build a fresh Player with empty capabilities, so the capability is copied in either case.
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         Player original = event.getOriginal();

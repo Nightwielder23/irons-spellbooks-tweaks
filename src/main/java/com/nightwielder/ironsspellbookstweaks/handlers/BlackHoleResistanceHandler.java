@@ -1,7 +1,7 @@
-// counters Iron's black hole pull on configured mobs. full immunity pins the victim in place, partial just scales deltaMovement. we follow black holes via entity join/leave events so we dont scan every level each tick.
+// Counters Iron's black hole pull on configured mobs. Full immunity pins the victim in place; partial scaling reduces deltaMovement. Follow black holes via entity join and leave events to avoid scanning every level each tick.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import io.redspace.ironsspellbooks.entity.spells.black_hole.BlackHole;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,22 +21,13 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class BlackHoleResistanceHandler {
 
-    private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/BlackHoleResistanceHandler");
-
-    // server-thread-only access during entity events and server tick, so a plain HashSet is enough
+    // Accessed only on the server thread during entity events and server tick, so a plain HashSet is enough
     private static final Set<BlackHole> activeBlackHoles = new HashSet<>();
 
-    // identity-compared cache so we rebuild only when the config layer swaps the underlying list on a reload.
-    // volatile because the config-reload worker writes these while the server thread reads them.
-    private static volatile List<? extends String> cachedRawList;
-    private static volatile Map<ResourceLocation, Double> cachedImmunityMap = Map.of();
-
-    // Fully-immune victims get anchored on first sight and teleported back each tick. Motion-scaling alone fails because Iron's pushes during entity tick and vanilla integrates before our ServerTickEvent.END runs.
+    // Fully-immune victims get anchored on first sight and teleported back each tick. Motion-scaling alone fails because Iron's pushes during entity tick and vanilla integrates before this handler's ServerTickEvent.END runs.
     private static final Map<UUID, Vec3> anchoredVictims = new HashMap<>();
 
     @SubscribeEvent
@@ -70,7 +61,7 @@ public class BlackHoleResistanceHandler {
         if (activeBlackHoles.isEmpty()) {
             return;
         }
-        Map<ResourceLocation, Double> immunityMap = getImmunityMap();
+        Map<ResourceLocation, Double> immunityMap = RuntimeConfig.blackholeImmunityMap;
         if (immunityMap.isEmpty()) {
             return;
         }
@@ -89,7 +80,7 @@ public class BlackHoleResistanceHandler {
         anchoredVictims.keySet().retainAll(currentTickAnchored);
     }
 
-    // clear tracked state on shutdown so black holes from a closed world don't linger into the next one we load
+    // Clear retained state on shutdown so black holes from a closed world don't linger into the next world loaded
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         activeBlackHoles.clear();
@@ -126,7 +117,7 @@ public class BlackHoleResistanceHandler {
         UUID victimId = victim.getUUID();
         Vec3 anchor = anchoredVictims.get(victimId);
         if (anchor == null) {
-            // lock to current pos. Iron's already shoved them a tick. we pin them here from now on.
+            // lock to current pos. Iron's already shoved them a tick, so pin them here from now on.
             anchor = victim.position();
             anchoredVictims.put(victimId, anchor);
         }
@@ -134,48 +125,5 @@ public class BlackHoleResistanceHandler {
         victim.setDeltaMovement(Vec3.ZERO);
         victim.hurtMarked = true;
         currentTickAnchored.add(victimId);
-    }
-
-    private static Map<ResourceLocation, Double> getImmunityMap() {
-        List<? extends String> currentRaw = Config.BLACKHOLE_IMMUNITY.get();
-        if (currentRaw == cachedRawList) {
-            return cachedImmunityMap;
-        }
-        Map<ResourceLocation, Double> rebuilt = parseImmunityList(currentRaw);
-        cachedRawList = currentRaw;
-        cachedImmunityMap = rebuilt;
-        return rebuilt;
-    }
-
-    private static Map<ResourceLocation, Double> parseImmunityList(List<? extends String> raw) {
-        if (raw.isEmpty()) {
-            return Map.of();
-        }
-        Map<ResourceLocation, Double> result = new HashMap<>();
-        for (String entry : raw) {
-            // entity ids contain one colon, so the strength is everything after the LAST colon
-            int separator = entry.lastIndexOf(':');
-            if (separator < 0) {
-                logger.warn("blackhole immunity entry '{}' missing strength suffix, skipping", entry);
-                continue;
-            }
-            String idPart = entry.substring(0, separator);
-            String strengthPart = entry.substring(separator + 1);
-            ResourceLocation entityId = ResourceLocation.tryParse(idPart);
-            if (entityId == null) {
-                logger.warn("blackhole immunity entry '{}' has invalid entity id '{}', skipping", entry, idPart);
-                continue;
-            }
-            double strength;
-            try {
-                strength = Double.parseDouble(strengthPart);
-            } catch (NumberFormatException numberFailed) {
-                logger.warn("blackhole immunity entry '{}' has non-numeric strength '{}', skipping", entry, strengthPart);
-                continue;
-            }
-            double clamped = Math.max(0.0, Math.min(1.0, strength));
-            result.put(entityId, clamped);
-        }
-        return Map.copyOf(result);
     }
 }

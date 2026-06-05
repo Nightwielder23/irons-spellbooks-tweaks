@@ -179,7 +179,7 @@ public final class RequirementsCommandHandler {
         return Component.literal(capitalized).withStyle(color);
     }
 
-    // getDisplayName shows some addon spells in the galactic font. build the translation key by hand instead. school color is just a visual cue.
+    // getDisplayName shows some addon spells in the galactic font. build the translation key by hand instead. school color is only a visual cue.
     private static Component resolveDisplayName(AbstractSpell spell, ResourceLocation spellId) {
         try {
             String spellName = spell.getSpellName();

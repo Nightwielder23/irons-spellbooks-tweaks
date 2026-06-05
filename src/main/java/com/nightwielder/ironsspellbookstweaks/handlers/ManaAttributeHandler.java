@@ -1,9 +1,9 @@
 // Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,12 +20,12 @@ public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // reusing the same UUID per modifier so relogin replaces our entry instead of stacking a duplicate
+    // Reuse the same UUID per modifier so relogin replaces the entry instead of stacking a duplicate
     private static final UUID MANA_REGEN_MODIFIER_ID = UUID.fromString("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f");
     private static final UUID MAX_MANA_MODIFIER_ID = UUID.fromString("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70");
     private static final UUID COOLDOWN_REDUCTION_MODIFIER_ID = UUID.fromString("5f4cad30-7061-6132-1e4f-3c4d5e6f7081");
     private static final UUID CAST_TIME_REDUCTION_MODIFIER_ID = UUID.fromString("60c5be41-8172-7243-2f50-4d5e6f708192");
-    // distinct UUIDs for capability-sourced bonuses so they stack with the config-sourced modifiers above
+    // Use distinct UUIDs for capability-sourced bonuses so they stack with the config-sourced modifiers above
     private static final UUID COOLDOWN_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("71d6cf52-9283-8354-3061-5e6f70819203");
     private static final UUID CAST_TIME_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("82e7d063-a394-9465-4172-6f7081920314");
     private static final UUID MAX_MANA_PROGRESS_MODIFIER_ID = UUID.fromString("93f8e174-b4a5-a576-5283-708192a30425");
@@ -39,7 +39,7 @@ public class ManaAttributeHandler {
         applyAll(event.getEntity());
     }
 
-    // respawn builds a fresh ServerPlayer without our permanent modifiers. so reapply each respawn.
+    // Respawn builds a fresh ServerPlayer without the permanent modifiers, so reapply on each respawn.
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!IronsSpellbooksCompat.isLoaded()) {
@@ -71,7 +71,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyManaRegenOverride(Player player) {
-        double configuredValue = Config.BASE_MANA_REGEN_PERCENT.get();
+        double configuredValue = RuntimeConfig.baseManaRegenPercent;
         if (configuredValue < 0) {
             return;
         }
@@ -85,7 +85,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyMaxManaOverride(Player player) {
-        int configuredValue = Config.STARTING_MAX_MANA.get();
+        int configuredValue = RuntimeConfig.startingMaxMana;
         if (configuredValue < 0) {
             return;
         }
@@ -99,7 +99,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyCooldownReductionBonus(Player player) {
-        double configuredValue = Config.COOLDOWN_REDUCTION_BONUS.get();
+        double configuredValue = RuntimeConfig.cooldownReductionBonus;
         if (configuredValue == 0.0) {
             return;
         }
@@ -113,7 +113,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyCastTimeReductionBonus(Player player) {
-        double configuredValue = Config.CAST_TIME_REDUCTION_BONUS.get();
+        double configuredValue = RuntimeConfig.castTimeReductionBonus;
         if (configuredValue == 0.0) {
             return;
         }
@@ -191,7 +191,7 @@ public class ManaAttributeHandler {
         if (instance == null) {
             return;
         }
-        // drop any prior copy of our modifier so config edits take on relogin; removeModifier is null-safe
+        // drop any prior copy of the modifier so config edits take on relogin; removeModifier is null-safe
         instance.removeModifier(modifierId);
         AttributeModifier modifier = new AttributeModifier(modifierId, modifierName, value, AttributeModifier.Operation.ADDITION);
         instance.addPermanentModifier(modifier);
