@@ -6,7 +6,7 @@ Soft dependency, no mixins, no access transformers. The mod loads cleanly withou
 
 ## What it does
 
-Iron's Spellbooks exposes `MANA_REGEN_MULTIPLIER`, `MANA_SPAWN_PERCENT`, and a few sword-related options in its serverconfig. There are several open issues asking for more direct control over mana regen and starting mana ([#161](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/161), [#162](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/162), [#391](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/391)) that haven't been addressed.
+Iron's Spellbooks exposes `MANA_REGEN_MULTIPLIER`, `MANA_SPAWN_PERCENT`, and a few sword-related options in its serverconfig. Open issues asking for more direct control over mana regen and starting mana ([#161](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/161), [#162](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/162), and [#391](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/391)) haven't been addressed.
 
 The mod fills those gaps without touching Iron's serverconfig (which has known multiplayer sync bugs per [#1033](https://github.com/iron431/Irons-Spells-n-Spellbooks/issues/1033)). Settings are kept in a separate TOML at `config/irons_spellbooks_tweaks-server.toml` and apply via attribute modifications and runtime hooks on Iron's public events.
 
@@ -23,7 +23,7 @@ Bonus added to the player's `MANA_REGEN` attribute on every login. Stacks as a f
 Bonus added to the player's `MAX_MANA` attribute on every login. Stacks as a flat addition on top of Iron's vanilla default of `100`. So setting this to `400` gives players `500` max mana total. Set to `-1` to disable.
 
 **`disableManaRegen`** (default `false`)
-Fully disables passive mana regen. Implemented as a per-tick drainback because Iron's regen path doesn't fire a cancellable event. Spell casting still works normally, only passive regeneration is blocked.
+Fully disables passive mana regen. Implemented as a per-tick drainback because Iron's regen path doesn't fire a cancellable event. Spell casting still works normally; only passive regeneration is blocked.
 
 ### `[cooldown]`
 
@@ -32,6 +32,21 @@ Additive bonus applied to the `COOLDOWN_REDUCTION` attribute for every player. A
 
 **`castTimeReductionBonus`** (default `0.0`, range `-10.0` to `10.0`)
 Additive bonus applied to the `CAST_TIME_REDUCTION` attribute for every player. Around `0.5` makes spells cast roughly twice as fast. Negative values lengthen cast times. Stacks with gear and effects.
+
+### `[spells]`
+
+**`spellPowerMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to every player's `SPELL_POWER` attribute. `1.0` leaves spell power unchanged. Values above `1.0` strengthen every spell, and values below `1.0` weaken them. Stacks multiplicatively with gear and other modifiers.
+
+**`buffDurationMultiplier`** (default `1.0`, range `0.0` to `10.0`)
+Multiplier applied to the duration of buff and debuff effects from Iron's Spellbooks spells. `1.0` leaves durations unchanged. Vanilla potions, food effects, and beacon effects are never affected. Which mod effects are scaled is controlled by `buffDurationNamespaces`. Composes multiplicatively with `spellPowerMultiplier` for Iron's spells whose duration scales with spell power.
+
+**`buffDurationNamespaces`** (default includes Iron's Spellbooks and known addons)
+Namespaces of mod effects that `buffDurationMultiplier` scales. The default covers Iron's Spellbooks plus the known addons that add their own effects (Cataclysm Spellbooks, dacxirons, GTBC's Geomancy Plus, and Traveloptics). Add more addon namespaces to scale their effects too, or remove entries to stop scaling them:
+```toml
+buffDurationNamespaces = ["irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gtbcs_geomancy_plus", "traveloptics"]
+```
+Vanilla `minecraft` is intentionally not supported and is ignored if listed.
 
 ### `[restrictions]`
 
@@ -101,12 +116,12 @@ A datapack-driven unlock system gates Iron's features behind advancements or bos
 
 **`advancement`**: fires when a player earns a specific advancement. Retroactively scans on login so existing players get unlocks they qualify for.
 
-**`entity_kill`**: fires when a player kills an entity matching the given type ID. Useful for mods that don't ship boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't tracked.
+**`entity_kill`**: fires when a player kills an entity matching the given type ID. Useful for mods that don't include boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't recorded.
 
 ### Grants
 
 Each unlock can grant any combination of:
-- `rarity_cap`: raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with `maxSpellRarity` config, the effective ceiling is whichever is looser. Raise-only, a later unlock can never tighten an earlier loosening.
+- `rarity_cap`: raise the player's allowed rarity ceiling. Value is one of `common`, `uncommon`, `rare`, `epic`, or `legendary`. The player can cast any spell with minimum rarity at or below this ceiling. Stacks with the `maxSpellRarity` config; the effective ceiling is whichever is looser. The cap only rises, so a later unlock can never tighten an earlier loosening.
 - `cooldown_reduction_bonus`: add to the player's cooldown reduction attribute
 - `cast_time_reduction_bonus`: add to the player's cast time reduction attribute
 - `max_mana_bonus`: integer flat addition to the player's MAX_MANA attribute. Stacks across unlocks (cumulative). Negative values subtract.
@@ -174,13 +189,23 @@ Open to all players:
 - Minecraft 1.20.1 Forge and 1.21.1 NeoForge (this branch is 1.21.1)
 - Iron's Spells 'n Spellbooks 3.0.0 or later (1.20.1) or 1.21.1-3.15.0 or later (1.21.1)
 - Forge 47.2.0 or later (1.20.1) or NeoForge 21.1.221 or later (1.21.1)
-- No conflicts expected with other Iron's addons. The mod hooks `PlayerEvent.PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent.Post`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `LivingIncomingDamageEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent.Post`, `AddReloadListenerEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
+- No conflicts expected with other Iron's addons. The mod hooks `PlayerEvent.PlayerLoggedInEvent`, `SpellPreCastEvent`, `InscribeSpellEvent`, `PlayerTickEvent.Post`, `AdvancementEvent.AdvancementEarnEvent`, `LivingDeathEvent`, `LivingIncomingDamageEvent`, `EntityJoinLevelEvent`, `EntityLeaveLevelEvent`, `ServerTickEvent.Post`, `AddReloadListenerEvent`, `MobEffectEvent.Added`, `ServerAboutToStartEvent`, `ServerStoppedEvent`, and `RegisterCommandsEvent`. None of these are commonly competed for in destructive ways.
 
 ## For modpack makers
 
-Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, ship the config alongside the pack. All settings are server-side so clients don't need matching configs.
+Drop the jar in your pack's `mods` folder, edit `config/irons_spellbooks_tweaks-server.toml`, and distribute the config alongside the pack. All settings are server-side so clients don't need matching configs.
 
 Note: progression data is per-world and stored as a NeoForge data attachment on the player's NBT. It survives death and login/logout. Datapack unlock JSONs reload via `/reload`.
+
+## Per-world overrides
+
+The global `config/irons_spellbooks_tweaks-server.toml` is the source of truth. Every world uses its values unless a per-world override is present.
+
+To override settings for one world, copy the global file into that world's `serverconfig` folder. In singleplayer the path is `saves/<world>/serverconfig/irons_spellbooks_tweaks-server.toml`. On a dedicated server it is `<server>/world/serverconfig/irons_spellbooks_tweaks-server.toml`.
+
+A per-world file overrides global per key. Keys present in the per-world file win, and keys absent from it fall back to the global value, so an override file copied from an older version still picks up new global settings. A per-world file that fails to parse logs a warning and falls back to global for that world.
+
+Values resolve once at world load. Edits to the global file apply on the next world load. Delete the per-world file to return that world fully to global.
 
 ## License
 

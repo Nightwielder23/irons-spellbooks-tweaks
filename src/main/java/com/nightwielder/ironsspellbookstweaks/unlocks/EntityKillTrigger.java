@@ -1,4 +1,4 @@
-// Fires an unlock when the player kills an entity matching the given type id. Useful for boss mods that don't ship advancements.
+// Fires an unlock when the player kills an entity matching the given type id. Useful for boss mods that don't include advancements.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
 import net.minecraft.resources.ResourceLocation;

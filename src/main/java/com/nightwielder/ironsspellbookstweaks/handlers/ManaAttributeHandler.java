@@ -1,10 +1,10 @@
 // Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.IronsSpellbooksTweaks;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.util.Optional;
 import net.minecraft.core.Holder;
@@ -24,12 +24,12 @@ public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // reusing the same ResourceLocation per modifier so relogin replaces our entry instead of stacking a duplicate
+    // Reuse the same ResourceLocation per modifier so relogin replaces the entry instead of stacking a duplicate
     private static final ResourceLocation MANA_REGEN_OVERRIDE_ID = id("ist_mana_regen_override");
     private static final ResourceLocation MAX_MANA_OVERRIDE_ID = id("ist_max_mana_override");
     private static final ResourceLocation COOLDOWN_REDUCTION_BONUS_ID = id("ist_cooldown_reduction_bonus");
     private static final ResourceLocation CAST_TIME_REDUCTION_BONUS_ID = id("ist_cast_time_reduction_bonus");
-    // distinct ids for attachment-sourced bonuses so they stack with the config-sourced modifiers above
+    // Use distinct ids for attachment-sourced bonuses so they stack with the config-sourced modifiers above
     private static final ResourceLocation COOLDOWN_REDUCTION_PROGRESS_ID = id("ist_cooldown_reduction_progress");
     private static final ResourceLocation CAST_TIME_REDUCTION_PROGRESS_ID = id("ist_cast_time_reduction_progress");
     private static final ResourceLocation MAX_MANA_PROGRESS_ID = id("ist_max_mana_progress");
@@ -44,7 +44,7 @@ public class ManaAttributeHandler {
         applyAll(event.getEntity());
     }
 
-    // restoreFrom only copies attribute base values, not modifiers. so respawned players lose ours.
+    // restoreFrom only copies attribute base values, not modifiers, so respawned players lose them.
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         applyAll(event.getEntity());
@@ -76,7 +76,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyManaRegenOverride(Player player) {
-        double configuredValue = Config.BASE_MANA_REGEN_PERCENT.get();
+        double configuredValue = RuntimeConfig.baseManaRegenPercent;
         if (configuredValue < 0) {
             return;
         }
@@ -90,7 +90,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyMaxManaOverride(Player player) {
-        int configuredValue = Config.STARTING_MAX_MANA.get();
+        int configuredValue = RuntimeConfig.startingMaxMana;
         if (configuredValue < 0) {
             return;
         }
@@ -104,7 +104,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyCooldownReductionBonus(Player player) {
-        double configuredValue = Config.COOLDOWN_REDUCTION_BONUS.get();
+        double configuredValue = RuntimeConfig.cooldownReductionBonus;
         if (configuredValue == 0.0) {
             return;
         }
@@ -118,7 +118,7 @@ public class ManaAttributeHandler {
     }
 
     private static void applyCastTimeReductionBonus(Player player) {
-        double configuredValue = Config.CAST_TIME_REDUCTION_BONUS.get();
+        double configuredValue = RuntimeConfig.castTimeReductionBonus;
         if (configuredValue == 0.0) {
             return;
         }
@@ -192,7 +192,7 @@ public class ManaAttributeHandler {
         if (instance == null) {
             return;
         }
-        // drop any prior copy of our modifier so config edits take on relogin; removeModifier is null-safe
+        // drop any prior copy of the modifier so config edits take on relogin; removeModifier is null-safe
         instance.removeModifier(modifierId);
         AttributeModifier modifier = new AttributeModifier(modifierId, value, AttributeModifier.Operation.ADD_VALUE);
         instance.addPermanentModifier(modifier);

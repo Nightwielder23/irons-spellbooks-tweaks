@@ -108,7 +108,7 @@ public class ISSTweaksCommand {
                 source.sendSuccess(() -> Component.literal(""), false);
             }
             first = false;
-            // attachment auto-creates on first read, so we always have a value
+            // attachment auto-creates on first read, so a value is always present
             PlayerProgress progress = player.getData(PlayerProgressAttachments.PLAYER_PROGRESS);
             source.sendSuccess(() -> Component.literal("isstweaks status for " + player.getName().getString() + ":"), false);
             source.sendSuccess(() -> Component.literal("  rarityCap: " + (progress.getRarityCap() == null ? "(none)" : progress.getRarityCap())), false);

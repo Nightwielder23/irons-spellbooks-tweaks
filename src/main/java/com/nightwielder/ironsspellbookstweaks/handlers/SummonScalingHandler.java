@@ -1,9 +1,10 @@
 // Scales summoned-mob max HP on spawn, summoned-mob melee damage on hit, and Summon Swords damage on hit, all driven by the [summons] config block.
-// Iron's classes are resolved by name so this handler stays loadable when Iron's is absent.
+// Resolve Iron's classes by name so this handler stays loadable when Iron's is absent.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.IronsSpellbooksTweaks;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig.ScalingConfig;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.lang.reflect.Method;
 import net.minecraft.resources.ResourceLocation;
@@ -26,11 +27,11 @@ public class SummonScalingHandler {
 
     private static final String SUMMON_SWORDS_SPELL_ID = "irons_spellbooks:summon_swords";
 
-    // fixed id so a re-fired EntityJoinLevelEvent replaces our HP modifier instead of stacking another
+    // Use a fixed id so a re-fired EntityJoinLevelEvent replaces the HP modifier instead of stacking another
     private static final ResourceLocation HP_SCALING_MODIFIER_ID =
             ResourceLocation.fromNamespaceAndPath(IronsSpellbooksTweaks.MOD_ID, "summon_hp_scaling");
 
-    // Iron's summon mob classes, resolved once by name. A null entry means the class was not found and scaling for it is skipped.
+    // Resolve Iron's summon mob classes once by name. A null entry means the class was not found and scaling for it is skipped.
     private static boolean summonClassesResolved;
     private static Class<?> summonedVexClass;
     private static Class<?> summonedZombieClass;
@@ -38,18 +39,13 @@ public class SummonScalingHandler {
     private static Class<?> summonedPolarBearClass;
     private static Class<?> summonedHorseClass;
 
-    // Iron's damage-source reflection handles, resolved once by name. Any null here disables sword damage scaling.
+    // Resolve Iron's damage-source reflection handles once by name. Any null here disables sword damage scaling.
     private static boolean damageClassesResolved;
     private static Class<?> spellDamageSourceClass;
     private static Method spellAccessor;
     private static Method getSpellIdAccessor;
 
-    // identity-compared sentinel so the config snapshot rebuilds only when the config layer swaps the backing values on a reload.
-    // volatile because the config-reload worker writes these while the server thread reads them.
-    private static volatile Double cachedSentinel;
-    private static volatile ScalingConfig cachedConfig;
-
-    // LOWEST priority so any other mod's MAX_HEALTH modifications on the same event land first. ADD_MULTIPLIED_BASE composes with theirs.
+    // Run at LOWEST priority so any other mod's MAX_HEALTH modifications on the same event land first. ADD_MULTIPLIED_BASE composes with theirs.
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onEntityJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide) {
@@ -63,7 +59,7 @@ public class SummonScalingHandler {
             return;
         }
         resolveSummonClasses();
-        ScalingConfig config = getScalingConfig();
+        ScalingConfig config = RuntimeConfig.scaling;
         if (isInstanceOf(summonedVexClass, summon)) {
             applyHpScaling(summon, config.vexHpMultiplier);
         } else if (isInstanceOf(summonedZombieClass, summon) || isInstanceOf(summonedSkeletonClass, summon)) {
@@ -82,7 +78,7 @@ public class SummonScalingHandler {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        ScalingConfig config = getScalingConfig();
+        ScalingConfig config = RuntimeConfig.scaling;
         // Summon Swords carries its spell id on the damage source, so it is matched by spell rather than by attacker.
         // Handle it first and return so the summon-melee path below can never double-scale the same sword hit.
         if (isSummonSwordsDamage(event.getSource())) {
@@ -92,7 +88,7 @@ public class SummonScalingHandler {
             return;
         }
         // Iron's summon melee uses getDamageSource(summon, summoner). summon goes in the direct-entity slot, player in the causing-entity slot.
-        // getEntity() gives the player so we read getDirectEntity() to get the summon that actually swung.
+        // getEntity() gives the player, so getDirectEntity() returns the summon that actually swung.
         Entity attacker = event.getSource().getDirectEntity();
         if (attacker == null) {
             return;
@@ -133,8 +129,8 @@ public class SummonScalingHandler {
         }
         AttributeModifier scaling;
         if (multiplier <= 0.0) {
-            // ADD_MULTIPLIED_BASE of -1 zeroes the base but other ADD_VALUE modifiers can still drift HP above 1.
-            // so ADD_VALUE of (1 - base) pins base+ours to 1. closest stable alive floor.
+            // ADD_MULTIPLIED_BASE of -1 zeroes the base, but other ADD_VALUE modifiers can still drift HP above 1,
+            // so ADD_VALUE of (1 - base) pins the total to 1, the closest stable alive floor.
             double pinDelta = 1.0 - maxHealth.getBaseValue();
             scaling = new AttributeModifier(HP_SCALING_MODIFIER_ID, pinDelta, AttributeModifier.Operation.ADD_VALUE);
         } else {
@@ -178,17 +174,6 @@ public class SummonScalingHandler {
         }
     }
 
-    private static ScalingConfig getScalingConfig() {
-        Double currentSentinel = Config.SUMMON_VEX_HP_MULTIPLIER.get();
-        if (currentSentinel == cachedSentinel) {
-            return cachedConfig;
-        }
-        ScalingConfig rebuilt = new ScalingConfig();
-        cachedSentinel = currentSentinel;
-        cachedConfig = rebuilt;
-        return rebuilt;
-    }
-
     private static void resolveSummonClasses() {
         if (summonClassesResolved) {
             return;
@@ -212,7 +197,7 @@ public class SummonScalingHandler {
             Class<?> abstractSpellClass = Class.forName("io.redspace.ironsspellbooks.api.spells.AbstractSpell");
             getSpellIdAccessor = abstractSpellClass.getMethod("getSpellId");
         } catch (ReflectiveOperationException lookupFailed) {
-            logger.warn("could not resolve Iron's SpellDamageSource API, sword damage scaling disabled", lookupFailed);
+            logger.warn("could not resolve Iron's SpellDamageSource API, so sword damage scaling is disabled", lookupFailed);
         }
     }
 
@@ -220,31 +205,8 @@ public class SummonScalingHandler {
         try {
             return Class.forName(className);
         } catch (ClassNotFoundException lookupFailed) {
-            logger.warn("Iron's class {} not found, HP scaling for it disabled", className);
+            logger.warn("Iron's class {} not found, so HP scaling for it is disabled", className);
             return null;
-        }
-    }
-
-    // snapshot of the [summons] config. rebuilt on reload.
-    private static final class ScalingConfig {
-        final double vexHpMultiplier;
-        final double vexDamageMultiplier;
-        final double raiseDeadHpMultiplier;
-        final double raiseDeadDamageMultiplier;
-        final double polarBearHpMultiplier;
-        final double polarBearDamageMultiplier;
-        final double horseHpMultiplier;
-        final double swordsDamageMultiplier;
-
-        ScalingConfig() {
-            this.vexHpMultiplier = Config.SUMMON_VEX_HP_MULTIPLIER.get();
-            this.vexDamageMultiplier = Config.SUMMON_VEX_DAMAGE_MULTIPLIER.get();
-            this.raiseDeadHpMultiplier = Config.RAISE_DEAD_HP_MULTIPLIER.get();
-            this.raiseDeadDamageMultiplier = Config.RAISE_DEAD_DAMAGE_MULTIPLIER.get();
-            this.polarBearHpMultiplier = Config.SUMMON_POLAR_BEAR_HP_MULTIPLIER.get();
-            this.polarBearDamageMultiplier = Config.SUMMON_POLAR_BEAR_DAMAGE_MULTIPLIER.get();
-            this.horseHpMultiplier = Config.SUMMON_HORSE_HP_MULTIPLIER.get();
-            this.swordsDamageMultiplier = Config.SUMMON_SWORDS_DAMAGE_MULTIPLIER.get();
         }
     }
 }

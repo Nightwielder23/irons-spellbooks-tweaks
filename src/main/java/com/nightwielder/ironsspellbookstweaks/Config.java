@@ -3,6 +3,7 @@ package com.nightwielder.ironsspellbookstweaks;
 import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
+// Defines the global server config; a per-world copy in serverconfig/ overrides these values for that world.
 public class Config {
 
     public static final ModConfigSpec SERVER_SPEC;
@@ -11,6 +12,9 @@ public class Config {
     public static final ModConfigSpec.DoubleValue COOLDOWN_REDUCTION_BONUS;
     public static final ModConfigSpec.DoubleValue CAST_TIME_REDUCTION_BONUS;
     public static final ModConfigSpec.BooleanValue DISABLE_MANA_REGEN;
+    public static final ModConfigSpec.DoubleValue SPELL_POWER_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue BUFF_DURATION_MULTIPLIER;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> BUFF_DURATION_NAMESPACES;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> SPELL_CASTING_DISABLED_DIMENSIONS;
     public static final ModConfigSpec.ConfigValue<String> MAX_SPELL_RARITY;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> INSCRIPTION_BLACKLIST;
@@ -44,6 +48,17 @@ public class Config {
         CAST_TIME_REDUCTION_BONUS = builder
                 .comment("Additive bonus applied to the CAST_TIME_REDUCTION attribute for every player. Around 0.5 makes spells cast roughly twice as fast. Negative values lengthen cast times. Stacks with gear and effects.")
                 .defineInRange("castTimeReductionBonus", 0.0, -10.0, 10.0);
+        builder.pop();
+        builder.push("spells");
+        SPELL_POWER_MULTIPLIER = builder
+                .comment("Multiplier applied to every player's SPELL_POWER attribute. 1.0 leaves spell power unchanged. Stacks multiplicatively with gear and other modifiers.")
+                .defineInRange("spellPowerMultiplier", 1.0, 0.0, 10.0);
+        BUFF_DURATION_MULTIPLIER = builder
+                .comment("Multiplier applied to the duration of buff and debuff effects from Iron's Spellbooks spells. Does not affect vanilla potions, food effects, beacon effects, or effects from other mods. 1.0 leaves durations unchanged.")
+                .defineInRange("buffDurationMultiplier", 1.0, 0.0, 10.0);
+        BUFF_DURATION_NAMESPACES = builder
+                .comment("Namespaces of mod effects scaled by buffDurationMultiplier. Defaults to Iron's Spellbooks and the known Iron's addons that register their own effects. Add other addon namespaces to scale their effects too, or remove entries to stop scaling them. Vanilla 'minecraft' is intentionally not supported and will be ignored if present.")
+                .defineList("buffDurationNamespaces", List.of("irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gtbcs_geomancy_plus", "traveloptics"), () -> "irons_spellbooks", entry -> entry instanceof String namespace && namespace.matches("[a-z0-9_.-]+"));
         builder.pop();
         builder.push("restrictions");
         SPELL_CASTING_DISABLED_DIMENSIONS = builder

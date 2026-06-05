@@ -1,4 +1,4 @@
-// Attaches the singleton UnlockManager to the server's resource reload pipeline.
+// Attaches the singleton UnlockManager to the server's resource reload listeners.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
 import com.nightwielder.ironsspellbookstweaks.IronsSpellbooksTweaks;

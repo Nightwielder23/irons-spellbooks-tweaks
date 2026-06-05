@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.neoforged.fml.ModList;
 
-// Runtime lookup of Iron's Spellbooks attributes by registry name, so we can soft-depend without compiling against their jar.
+// Looks up Iron's Spellbooks attributes by registry name at runtime so the mod can soft-depend without compiling against their jar.
 public class IronsSpellbooksCompat {
 
     public static final String IRONS_MOD_ID = "irons_spellbooks";
@@ -30,6 +30,10 @@ public class IronsSpellbooksCompat {
 
     public static Optional<Holder<Attribute>> getCastTimeReductionAttribute() {
         return lookup("cast_time_reduction");
+    }
+
+    public static Optional<Holder<Attribute>> getSpellPowerAttribute() {
+        return lookup("spell_power");
     }
 
     private static Optional<Holder<Attribute>> lookup(String path) {

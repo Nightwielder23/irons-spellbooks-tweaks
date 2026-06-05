@@ -23,7 +23,7 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
     private static final String DIRECTORY = "isstweaks/unlocks";
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/UnlockManager");
 
-    // volatile + Map.copyOf gives lock-free atomic swap on reload, reads stay unsynchronized
+    // volatile + Map.copyOf gives lock-free atomic swap on reload; reads stay unsynchronized
     private static volatile Map<ResourceLocation, UnlockDefinition> unlocks = Map.of();
     private static volatile Map<ResourceLocation, List<UnlockDefinition>> byAdvancement = Map.of();
     private static volatile Map<ResourceLocation, List<UnlockDefinition>> byEntityKill = Map.of();
@@ -56,7 +56,7 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
             } catch (JsonParseException parseFailed) {
                 logger.warn("failed to parse unlock {}: {}", id, parseFailed.getMessage());
             } catch (RuntimeException unexpected) {
-                // gson throws NumberFormatException or UnsupportedOperationException on wrong-type values, neither is a JsonParseException. without this catch one bad file kills the whole reload.
+                // gson throws NumberFormatException or UnsupportedOperationException on wrong-type values, and neither is a JsonParseException. without this catch one bad file kills the whole reload.
                 logger.warn("failed to parse unlock {}: {}", id, unexpected.toString(), unexpected);
             }
         }

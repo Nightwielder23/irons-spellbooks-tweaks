@@ -33,7 +33,7 @@ public class RetroactiveUnlockHandler {
         PlayerProgress progress = serverPlayer.getData(PlayerProgressAttachments.PLAYER_PROGRESS);
         int matchedCount = 0;
         for (UnlockDefinition unlock : UnlockManager.getAll().values()) {
-            // entity_kill triggers can't be replayed retroactively since we don't track past kills. Players need to re-kill the entity, or an admin can grant via /isstweaks grant.
+            // entity_kill triggers can't be replayed retroactively because past kills are not recorded. Players need to re-kill the entity, or an admin can grant via /isstweaks grant.
             if (!(unlock.getTrigger() instanceof AdvancementTrigger advancementTrigger)) {
                 continue;
             }

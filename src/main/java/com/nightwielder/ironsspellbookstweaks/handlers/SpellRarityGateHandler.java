@@ -1,9 +1,9 @@
-// blocks player casts whose min rarity is over the ceiling (looser of the config gate and the player's own cap). mobs arent affected since SpellPreCastEvent is player-only.
+// blocks player casts whose min rarity is over the ceiling (looser of the config gate and the player's own cap). mobs aren't affected since SpellPreCastEvent is player-only.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import io.redspace.ironsspellbooks.api.config.SpellConfigManager;
 import io.redspace.ironsspellbooks.api.config.SpellConfigParameter;
 import io.redspace.ironsspellbooks.api.events.SpellPreCastEvent;
@@ -12,21 +12,12 @@ import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SpellRarityGateHandler {
 
-    private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/SpellRarityGateHandler");
-
-    // identity-compared cache so we re-parse the config string only when it changes; player cap is read fresh each cast.
-    // volatile because the config-reload worker writes these while the server thread reads them.
-    private static volatile String cachedRawValue;
-    private static volatile SpellRarity cachedThreshold;
-
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
-        SpellRarity configThreshold = getConfigThreshold();
+        SpellRarity configThreshold = parseRarity(RuntimeConfig.maxSpellRarity);
         Player player = event.getEntity();
         PlayerProgress progress = player.getData(PlayerProgressAttachments.PLAYER_PROGRESS);
         SpellRarity playerCap = parseRarity(progress.getRarityCap());
@@ -57,29 +48,6 @@ public class SpellRarityGateHandler {
             return a;
         }
         return a.compareRarity(b) >= 0 ? a : b;
-    }
-
-    private static SpellRarity getConfigThreshold() {
-        String currentRaw = Config.MAX_SPELL_RARITY.get();
-        if (currentRaw == cachedRawValue) {
-            return cachedThreshold;
-        }
-        SpellRarity parsed = parseThreshold(currentRaw);
-        cachedRawValue = currentRaw;
-        cachedThreshold = parsed;
-        return parsed;
-    }
-
-    private static SpellRarity parseThreshold(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        try {
-            return SpellRarity.valueOf(raw.trim().toUpperCase());
-        } catch (IllegalArgumentException invalid) {
-            logger.warn("maxSpellRarity '{}' is not a valid rarity, gate disabled until corrected", raw);
-            return null;
-        }
     }
 
     // cap is stored as a string to keep Iron's out of the attachment layer. parse to enum here.

@@ -4,6 +4,7 @@ import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachmen
 import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.SpellPowerMultiplierHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SummonScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
@@ -24,7 +25,8 @@ public class IronsSpellbooksTweaks {
 
     public IronsSpellbooksTweaks(IEventBus modEventBus, ModContainer modContainer) {
         PlayerProgressAttachments.register(modEventBus);
-        modContainer.registerConfig(ModConfig.Type.SERVER, Config.SERVER_SPEC);
+        // Register as COMMON so the toml writes to the global config folder instead of per-world serverconfig.
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SERVER_SPEC, "irons_spellbooks_tweaks-server.toml");
 
         // gated on Iron's presence because these handlers reference Iron's event types in their @SubscribeEvent parameter signatures, which the bus resolves at registration time before any runtime isLoaded check could intercept
         if (IronsSpellbooksCompat.isLoaded()) {
@@ -33,6 +35,7 @@ public class IronsSpellbooksTweaks {
             NeoForge.EVENT_BUS.register(SpellRarityGateHandler.class);
             NeoForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
             NeoForge.EVENT_BUS.register(SummonScalingHandler.class);
+            NeoForge.EVENT_BUS.register(SpellPowerMultiplierHandler.class);
             logger.info("Iron's Spellbooks Tweaks loaded with Iron's integration");
         } else {
             logger.info("Iron's Spellbooks not detected, gated handlers (inscription, dimension, rarity, black hole, summons) will not be registered");

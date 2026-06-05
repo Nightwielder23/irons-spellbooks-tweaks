@@ -21,7 +21,7 @@ public class EntityKillUnlockHandler {
         if (victim.level().isClientSide) {
             return;
         }
-        // ignore PvP for now, only mob kills count toward unlocks
+        // ignore PvP for now; only mob kills count toward unlocks
         if (victim instanceof Player) {
             return;
         }

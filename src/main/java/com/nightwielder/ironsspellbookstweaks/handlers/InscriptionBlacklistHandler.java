@@ -1,9 +1,9 @@
 // Cancels inscription of blacklisted spells at the inscription table. Spell IDs are matched as full namespaced strings (e.g. "irons_spellbooks:fireball").
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
-import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
+import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import io.redspace.ironsspellbooks.api.events.InscribeSpellEvent;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +13,7 @@ public class InscriptionBlacklistHandler {
 
     @SubscribeEvent
     public static void onInscribeSpell(InscribeSpellEvent event) {
-        List<? extends String> blacklist = Config.INSCRIPTION_BLACKLIST.get();
+        List<? extends String> blacklist = RuntimeConfig.inscriptionBlacklist;
         if (blacklist.isEmpty()) {
             return;
         }
