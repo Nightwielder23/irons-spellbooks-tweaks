@@ -36,10 +36,10 @@ Additive bonus applied to the `CAST_TIME_REDUCTION` attribute for every player. 
 ### `[spells]`
 
 **`spellPowerMultiplier`** (default `1.0`, range `0.0` to `10.0`)
-Multiplier applied to every player's `SPELL_POWER` attribute. `1.0` leaves spell power unchanged. Values above `1.0` strengthen every spell, and values below `1.0` weaken them. Stacks multiplicatively with gear and other modifiers.
+Multiplier applied to every player's `SPELL_POWER` attribute. `1.0` leaves spell power unchanged. Values above `1.0` strengthen every spell, and values below `1.0` weaken them. Stacks multiplicatively with gear and other modifiers. Damage values shown in spell tooltips reflect this multiplier automatically, since Iron's reads the SPELL_POWER attribute live.
 
 **`buffDurationMultiplier`** (default `1.0`, range `0.0` to `10.0`)
-Multiplier applied to the duration of buff and debuff effects from Iron's Spellbooks spells. `1.0` leaves durations unchanged. Vanilla potions, food effects, and beacon effects are never affected. Which mod effects are scaled is controlled by `buffDurationNamespaces`. Composes multiplicatively with `spellPowerMultiplier` for Iron's spells whose duration scales with spell power.
+Multiplier applied to the duration of buff and debuff effects from Iron's Spellbooks spells. `1.0` leaves durations unchanged. Vanilla potions, food effects, and beacon effects are never affected. Which mod effects are scaled is controlled by `buffDurationNamespaces`. Composes multiplicatively with `spellPowerMultiplier` for Iron's spells whose duration scales with spell power. Spell tooltips show the unmodified base duration. The effect applied in-game reflects the multiplier, and the active effect countdown in your inventory shows the actual time remaining.
 
 **`buffDurationNamespaces`** (default includes Iron's Spellbooks and known addons)
 Namespaces of mod effects that `buffDurationMultiplier` scales. The default covers Iron's Spellbooks plus the known addons that add their own effects (Cataclysm Spellbooks, dacxirons, GameTechBC's Spellbooks, GTBC's Geomancy Plus, Hazen 'n Stuff, Illage and Spell-age, and Traveloptics). Add more addon namespaces to scale their effects too, or remove entries to stop scaling them:
