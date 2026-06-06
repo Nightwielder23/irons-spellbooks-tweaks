@@ -1,4 +1,4 @@
-// Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
+// Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.IronsSpellbooksTweaks;

@@ -1,4 +1,4 @@
-// Command tree for /isstweaks. Admin subcommands (grant/revoke/status/reset) require permission level 2; the requirements lookup is open to all players when registered.
+// Require permission level 2 for admin subcommands (grant/revoke/status/reset/copyconfig); the requirements lookup is open to all players when registered.
 package com.nightwielder.ironsspellbookstweaks.command;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -7,12 +7,16 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.nightwielder.ironsspellbookstweaks.Config;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockApplicator;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockDefinition;
 import com.nightwielder.ironsspellbookstweaks.unlocks.UnlockManager;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.function.Predicate;
 import net.minecraft.commands.CommandSourceStack;
@@ -22,9 +26,16 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.LevelResource;
+import net.neoforged.fml.loading.FMLPaths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ISSTweaksCommand {
+
+    private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ISSTweaksCommand");
 
     private static final SuggestionProvider<CommandSourceStack> UNLOCK_ID_SUGGESTIONS = (context, builder) -> {
         Collection<ResourceLocation> ids = UnlockManager.getAll().keySet();
@@ -49,7 +60,9 @@ public class ISSTweaksCommand {
                                 .executes(ISSTweaksCommand::executeStatus)))
                 .then(Commands.literal("reset").requires(isOp)
                         .then(Commands.argument("player", EntityArgument.players())
-                                .executes(ISSTweaksCommand::executeReset)));
+                                .executes(ISSTweaksCommand::executeReset)))
+                .then(Commands.literal("copyconfig").requires(isOp)
+                        .executes(ISSTweaksCommand::executeCopyConfig));
         // Skip the requirements subcommand when Iron's is absent. The handler class references Iron's API types, so loading it without Iron's would fail.
         if (IronsSpellbooksCompat.isLoaded()) {
             root.then(Commands.literal("requirements")
@@ -131,5 +144,31 @@ public class ISSTweaksCommand {
             source.sendSuccess(() -> Component.literal("reset isstweaks progress for " + player.getName().getString()), true);
         }
         return players.size();
+    }
+
+    private static int executeCopyConfig(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        MinecraftServer server = source.getServer();
+        Path globalConfig = FMLPaths.CONFIGDIR.get().resolve(Config.SERVER_CONFIG_FILE);
+        Path perWorldConfig = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig").resolve(Config.SERVER_CONFIG_FILE);
+        if (!Files.exists(globalConfig)) {
+            source.sendFailure(Component.literal("global config file not found at " + globalConfig));
+            return 0;
+        }
+        if (Files.exists(perWorldConfig)) {
+            source.sendFailure(Component.literal("per-world config already exists at " + perWorldConfig + ". delete or rename the existing file first."));
+            return 0;
+        }
+        try {
+            Files.createDirectories(perWorldConfig.getParent());
+            Files.copy(globalConfig, perWorldConfig);
+        } catch (IOException copyFailed) {
+            logger.warn("failed to copy global config to {}", perWorldConfig, copyFailed);
+            source.sendFailure(Component.literal("failed to copy config: " + copyFailed.getMessage()));
+            return 0;
+        }
+        Path displayPath = FMLPaths.GAMEDIR.get().relativize(perWorldConfig);
+        source.sendSuccess(() -> Component.literal("copied global config to " + displayPath + ". edit the per-world copy and reload the world to apply overrides."), true);
+        return 1;
     }
 }

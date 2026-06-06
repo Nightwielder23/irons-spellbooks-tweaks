@@ -42,9 +42,9 @@ Multiplier applied to every player's `SPELL_POWER` attribute. `1.0` leaves spell
 Multiplier applied to the duration of buff and debuff effects from Iron's Spellbooks spells. `1.0` leaves durations unchanged. Vanilla potions, food effects, and beacon effects are never affected. Which mod effects are scaled is controlled by `buffDurationNamespaces`. Composes multiplicatively with `spellPowerMultiplier` for Iron's spells whose duration scales with spell power.
 
 **`buffDurationNamespaces`** (default includes Iron's Spellbooks and known addons)
-Namespaces of mod effects that `buffDurationMultiplier` scales. The default covers Iron's Spellbooks plus the known addons that add their own effects (Cataclysm Spellbooks, dacxirons, GTBC's Geomancy Plus, and Traveloptics). Add more addon namespaces to scale their effects too, or remove entries to stop scaling them:
+Namespaces of mod effects that `buffDurationMultiplier` scales. The default covers Iron's Spellbooks plus the known addons that add their own effects (Cataclysm Spellbooks, dacxirons, GameTechBC's Spellbooks, GTBC's Geomancy Plus, Hazen 'n Stuff, Illage and Spell-age, and Traveloptics). Add more addon namespaces to scale their effects too, or remove entries to stop scaling them:
 ```toml
-buffDurationNamespaces = ["irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gtbcs_geomancy_plus", "traveloptics"]
+buffDurationNamespaces = ["irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gametechbcs_spellbooks", "gtbcs_geomancy_plus", "hazennstuff", "ias_spellbooks", "traveloptics"]
 ```
 Vanilla `minecraft` is intentionally not supported and is ignored if listed.
 
@@ -179,6 +179,7 @@ OP-only:
 - `/isstweaks revoke <player> <unlock_id>`: remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
 - `/isstweaks status <player>`: show the player's current progress
 - `/isstweaks reset <player>`: wipe all progression data for the player
+- `/isstweaks copyconfig`: copy the global config into the current world's serverconfig folder. Does not overwrite an existing per-world file.
 
 Open to all players:
 - `/isstweaks requirements spell <spell_id>`: shows the unlock requirement for a specific spell. Output is prefixed with `[Unlocked]` if the calling player has already met the requirement.
@@ -202,6 +203,8 @@ Note: progression data is per-world and stored as a NeoForge data attachment on 
 The global `config/irons_spellbooks_tweaks-server.toml` is the source of truth. Every world uses its values unless a per-world override is present.
 
 To override settings for one world, copy the global file into that world's `serverconfig` folder. In singleplayer the path is `saves/<world>/serverconfig/irons_spellbooks_tweaks-server.toml`. On a dedicated server it is `<server>/world/serverconfig/irons_spellbooks_tweaks-server.toml`.
+
+Run `/isstweaks copyconfig` in-game (permission level 2) to copy the global file into the current world's `serverconfig` folder without opening a file explorer. The command will not overwrite an existing per-world file; delete or rename it first.
 
 A per-world file overrides global per key. Keys present in the per-world file win, and keys absent from it fall back to the global value, so an override file copied from an older version still picks up new global settings. A per-world file that fails to parse logs a warning and falls back to global for that world.
 
