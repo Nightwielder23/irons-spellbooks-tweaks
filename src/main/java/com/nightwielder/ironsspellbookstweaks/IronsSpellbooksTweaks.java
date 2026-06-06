@@ -43,7 +43,7 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(ManaRegenCancelHandler.class);
         MinecraftForge.EVENT_BUS.register(ConfigOverrideHandler.class);
         MinecraftForge.EVENT_BUS.register(BuffDurationHandler.class);
-        // gated on Iron's presence because these handlers reference Iron's event types in their @SubscribeEvent parameter signatures, which Forge resolves at registration time before any runtime isLoaded check could intercept
+        // Register these handlers only when Iron's is loaded. Some hard-reference Iron's classes or event types in their signatures, which the bus resolves at registration before any runtime isLoaded check, and the rest read Iron's attributes or scale Iron's summons, so they do nothing useful without Iron's.
         if (IronsSpellbooksCompat.isLoaded()) {
             MinecraftForge.EVENT_BUS.register(SpellCastDimensionHandler.class);
             MinecraftForge.EVENT_BUS.register(SpellRarityGateHandler.class);
@@ -59,7 +59,7 @@ public class IronsSpellbooksTweaks {
         MinecraftForge.EVENT_BUS.register(EntityKillUnlockHandler.class);
         MinecraftForge.EVENT_BUS.register(ISSTweaksCommandRegistry.class);
         // Register as COMMON so the toml writes to the global config folder instead of per-world serverconfig.
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SERVER_SPEC, "irons_spellbooks_tweaks-server.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SERVER_SPEC, Config.SERVER_CONFIG_FILE);
         logger.info("Iron's Spellbooks Tweaks loaded");
         if (!IronsSpellbooksCompat.isLoaded()) {
             logger.warn("Iron's Spellbooks not detected, all handlers will no-op");

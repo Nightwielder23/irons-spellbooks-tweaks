@@ -7,7 +7,8 @@ Newest first. Versions match the Forge and NeoForge builds.
 - added a per-world override system. drop a copy of the global config into a world's serverconfig folder to override values for that world. present keys win, absent keys fall back to global, an unparseable file falls back to global, and values resolve once at world load.
 - added spellPowerMultiplier in the new [spells] config section. default 1.0, range 0.0 to 10.0. scales every player's SPELL_POWER attribute.
 - added buffDurationMultiplier in the [spells] config section. default 1.0, range 0.0 to 10.0. scales the duration of buff and debuff effects from Iron's Spellbooks spells. does not affect vanilla potions, food effects, beacon effects, or effects from other mods.
-- added buffDurationNamespaces in the [spells] config section. defaults to Iron's Spellbooks and known addons (cataclysm_spellbooks, dacxirons, gtbcs_geomancy_plus, and traveloptics). controls which mod effect namespaces buffDurationMultiplier scales, and logs once per session when a player receives an effect from a namespace not in the list. vanilla minecraft is not supported.
+- added buffDurationNamespaces in the [spells] config section. defaults to Iron's Spellbooks and known addons (cataclysm_spellbooks, dacxirons, gametechbcs_spellbooks, gtbcs_geomancy_plus, hazennstuff, ias_spellbooks, and traveloptics). controls which mod effect namespaces buffDurationMultiplier scales, and logs once per session when a player receives an effect from a namespace not in the list. vanilla minecraft is not supported.
+- added the /isstweaks copyconfig command. copies the global config into the current world's serverconfig folder so per-world overrides can be set up in-game. requires permission level 2 and does not overwrite an existing per-world file.
 
 ## v1.4.1
 - fixed active black hole references not getting cleared on server stop, so a closed world's black holes no longer linger into the next world loaded in the same session.

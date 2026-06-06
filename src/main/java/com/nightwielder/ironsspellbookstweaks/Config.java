@@ -3,8 +3,10 @@ package com.nightwielder.ironsspellbookstweaks;
 import java.util.List;
 import net.minecraftforge.common.ForgeConfigSpec;
 
-// Defines the global server config; a per-world copy in serverconfig/ overrides these values for that world.
+// Defines global server settings that a per-world serverconfig copy overrides per key.
 public class Config {
+
+    public static final String SERVER_CONFIG_FILE = "irons_spellbooks_tweaks-server.toml";
 
     public static final ForgeConfigSpec SERVER_SPEC;
     public static final ForgeConfigSpec.DoubleValue BASE_MANA_REGEN_PERCENT;
@@ -58,7 +60,7 @@ public class Config {
                 .defineInRange("buffDurationMultiplier", 1.0, 0.0, 10.0);
         BUFF_DURATION_NAMESPACES = builder
                 .comment("Namespaces of mod effects scaled by buffDurationMultiplier. Defaults to Iron's Spellbooks and the known Iron's addons that register their own effects. Add other addon namespaces to scale their effects too, or remove entries to stop scaling them. Vanilla 'minecraft' is intentionally not supported and will be ignored if present.")
-                .defineList("buffDurationNamespaces", List.of("irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gtbcs_geomancy_plus", "traveloptics"), entry -> entry instanceof String namespace && namespace.matches("[a-z0-9_.-]+"));
+                .defineList("buffDurationNamespaces", List.of("irons_spellbooks", "cataclysm_spellbooks", "dacxirons", "gametechbcs_spellbooks", "gtbcs_geomancy_plus", "hazennstuff", "ias_spellbooks", "traveloptics"), entry -> entry instanceof String namespace && namespace.matches("[a-z0-9_.-]+"));
         builder.pop();
         builder.push("restrictions");
         SPELL_CASTING_DISABLED_DIMENSIONS = builder

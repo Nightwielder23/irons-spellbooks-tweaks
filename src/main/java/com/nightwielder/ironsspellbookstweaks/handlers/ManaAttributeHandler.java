@@ -1,4 +1,4 @@
-// Applies the configured mana, cooldown, and cast-time attribute overrides to players on login and respawn. Runs on the game bus since the server config isn't loaded during mod construction.
+// Runs on the game bus since the server config isn't loaded during mod construction.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
@@ -20,35 +20,32 @@ public class ManaAttributeHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaAttributeHandler");
 
-    // Reuse the same UUID per modifier so relogin replaces the entry instead of stacking a duplicate
-    private static final UUID MANA_REGEN_MODIFIER_ID = UUID.fromString("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f");
-    private static final UUID MAX_MANA_MODIFIER_ID = UUID.fromString("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70");
-    private static final UUID COOLDOWN_REDUCTION_MODIFIER_ID = UUID.fromString("5f4cad30-7061-6132-1e4f-3c4d5e6f7081");
-    private static final UUID CAST_TIME_REDUCTION_MODIFIER_ID = UUID.fromString("60c5be41-8172-7243-2f50-4d5e6f708192");
-    // Use distinct UUIDs for capability-sourced bonuses so they stack with the config-sourced modifiers above
-    private static final UUID COOLDOWN_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("71d6cf52-9283-8354-3061-5e6f70819203");
-    private static final UUID CAST_TIME_REDUCTION_PROGRESS_MODIFIER_ID = UUID.fromString("82e7d063-a394-9465-4172-6f7081920314");
-    private static final UUID MAX_MANA_PROGRESS_MODIFIER_ID = UUID.fromString("93f8e174-b4a5-a576-5283-708192a30425");
-    private static final UUID MANA_REGEN_PROGRESS_MODIFIER_ID = UUID.fromString("a409f285-c5b6-b687-6394-8192a304a536");
+    // Reuse the same identity per modifier so relogin replaces the entry instead of stacking a duplicate.
+    // Give config-sourced and progress-sourced bonuses distinct identities so they stack with each other.
+    private static final ModifierId MANA_REGEN_OVERRIDE_ID = new ModifierId("3d2a8b1e-5e4f-4f1a-9c2d-1a2b3c4d5e6f", "ist_mana_regen_override");
+    private static final ModifierId MAX_MANA_OVERRIDE_ID = new ModifierId("4e3b9c2f-6f50-5021-0d3e-2b3c4d5e6f70", "ist_max_mana_override");
+    private static final ModifierId COOLDOWN_REDUCTION_BONUS_ID = new ModifierId("5f4cad30-7061-6132-1e4f-3c4d5e6f7081", "ist_cooldown_reduction_bonus");
+    private static final ModifierId CAST_TIME_REDUCTION_BONUS_ID = new ModifierId("60c5be41-8172-7243-2f50-4d5e6f708192", "ist_cast_time_reduction_bonus");
+    private static final ModifierId COOLDOWN_REDUCTION_PROGRESS_ID = new ModifierId("71d6cf52-9283-8354-3061-5e6f70819203", "ist_cooldown_reduction_progress");
+    private static final ModifierId CAST_TIME_REDUCTION_PROGRESS_ID = new ModifierId("82e7d063-a394-9465-4172-6f7081920314", "ist_cast_time_reduction_progress");
+    private static final ModifierId MAX_MANA_PROGRESS_ID = new ModifierId("93f8e174-b4a5-a576-5283-708192a30425", "ist_max_mana_progress");
+    private static final ModifierId MANA_REGEN_PROGRESS_ID = new ModifierId("a409f285-c5b6-b687-6394-8192a304a536", "ist_mana_regen_progress");
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         applyAll(event.getEntity());
     }
 
     // Respawn builds a fresh ServerPlayer without the permanent modifiers, so reapply on each respawn.
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         applyAll(event.getEntity());
     }
 
     private static void applyAll(Player player) {
+        if (!IronsSpellbooksCompat.isLoaded()) {
+            return;
+        }
         applyManaRegenOverride(player);
         applyMaxManaOverride(player);
         applyCooldownReductionBonus(player);
@@ -80,7 +77,7 @@ public class ManaAttributeHandler {
             logger.warn("MANA_REGEN attribute not registered, skipping baseManaRegenPercent override");
             return;
         }
-        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_MODIFIER_ID, "ist_mana_regen_override", configuredValue);
+        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_OVERRIDE_ID, configuredValue);
         logger.info("applied baseManaRegenPercent override to {}: {}", player.getName().getString(), configuredValue);
     }
 
@@ -94,7 +91,7 @@ public class ManaAttributeHandler {
             logger.warn("MAX_MANA attribute not registered, skipping startingMaxMana override");
             return;
         }
-        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_MODIFIER_ID, "ist_max_mana_override", configuredValue);
+        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_OVERRIDE_ID, configuredValue);
         logger.info("applied startingMaxMana override to {}: {}", player.getName().getString(), configuredValue);
     }
 
@@ -108,7 +105,7 @@ public class ManaAttributeHandler {
             logger.warn("COOLDOWN_REDUCTION attribute not registered, skipping cooldownReductionBonus");
             return;
         }
-        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_MODIFIER_ID, "ist_cooldown_reduction_bonus", configuredValue);
+        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_BONUS_ID, configuredValue);
         logger.info("applied cooldownReductionBonus to {}: {}", player.getName().getString(), configuredValue);
     }
 
@@ -122,7 +119,7 @@ public class ManaAttributeHandler {
             logger.warn("CAST_TIME_REDUCTION attribute not registered, skipping castTimeReductionBonus");
             return;
         }
-        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_MODIFIER_ID, "ist_cast_time_reduction_bonus", configuredValue);
+        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_BONUS_ID, configuredValue);
         logger.info("applied castTimeReductionBonus to {}: {}", player.getName().getString(), configuredValue);
     }
 
@@ -137,7 +134,7 @@ public class ManaAttributeHandler {
         if (cooldownReductionAttribute.isEmpty()) {
             return;
         }
-        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_PROGRESS_MODIFIER_ID, "ist_cooldown_reduction_progress", progressValue);
+        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_PROGRESS_ID, progressValue);
         logger.info("applied progress cooldown bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
@@ -152,7 +149,7 @@ public class ManaAttributeHandler {
         if (castTimeReductionAttribute.isEmpty()) {
             return;
         }
-        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_PROGRESS_MODIFIER_ID, "ist_cast_time_reduction_progress", progressValue);
+        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_PROGRESS_ID, progressValue);
         logger.info("applied progress cast time bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
@@ -167,7 +164,7 @@ public class ManaAttributeHandler {
         if (maxManaAttribute.isEmpty()) {
             return;
         }
-        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_PROGRESS_MODIFIER_ID, "ist_max_mana_progress", progressValue);
+        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_PROGRESS_ID, progressValue);
         logger.info("applied progress max mana bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
@@ -182,18 +179,24 @@ public class ManaAttributeHandler {
         if (manaRegenAttribute.isEmpty()) {
             return;
         }
-        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_PROGRESS_MODIFIER_ID, "ist_mana_regen_progress", progressValue);
+        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_PROGRESS_ID, progressValue);
         logger.info("applied progress mana regen bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
-    private static void applyAdditiveOverride(Player player, Attribute attribute, UUID modifierId, String modifierName, double value) {
+    private static void applyAdditiveOverride(Player player, Attribute attribute, ModifierId modifier, double value) {
         AttributeInstance instance = player.getAttribute(attribute);
         if (instance == null) {
             return;
         }
         // drop any prior copy of the modifier so config edits take on relogin; removeModifier is null-safe
-        instance.removeModifier(modifierId);
-        AttributeModifier modifier = new AttributeModifier(modifierId, modifierName, value, AttributeModifier.Operation.ADDITION);
-        instance.addPermanentModifier(modifier);
+        instance.removeModifier(modifier.uuid());
+        AttributeModifier attributeModifier = new AttributeModifier(modifier.uuid(), modifier.name(), value, AttributeModifier.Operation.ADDITION);
+        instance.addPermanentModifier(attributeModifier);
+    }
+
+    private record ModifierId(UUID uuid, String name) {
+        private ModifierId(String uuid, String name) {
+            this(UUID.fromString(uuid), name);
+        }
     }
 }

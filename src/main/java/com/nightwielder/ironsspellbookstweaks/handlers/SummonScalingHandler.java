@@ -1,5 +1,4 @@
-// Scales summoned-mob max HP on spawn, summoned-mob melee damage on hit, and Summon Swords damage on hit, all driven by the [summons] config block.
-// Resolve Iron's classes by name so this handler stays loadable when Iron's is absent.
+// Resolve Iron's classes by name so the handler stays loadable when Iron's is absent.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;

@@ -1,4 +1,4 @@
-// Scales the duration of effects in the configured namespaces applied to players by the configured multiplier. Sets the duration field by reflection because MobEffectInstance exposes no setter.
+// Sets the duration field by reflection because MobEffectInstance exposes no setter.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
@@ -84,11 +84,12 @@ public class BuffDurationHandler {
             return durationField;
         }
         durationFieldResolved = true;
-        for (String name : new String[] {"duration", "f_19504_"}) {
+        for (String name : new String[] {"duration", "f_19503_"}) {
             try {
                 Field field = MobEffectInstance.class.getDeclaredField(name);
                 field.setAccessible(true);
                 durationField = field;
+                logger.info("resolved MobEffectInstance duration field via name '{}'", name);
                 return durationField;
             } catch (NoSuchFieldException missing) {
                 // try the next mapping name

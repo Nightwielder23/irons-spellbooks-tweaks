@@ -1,4 +1,3 @@
-// Resolves the per-world config at server start and restores global values at server stop.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;

@@ -16,22 +16,26 @@ public class IronsSpellbooksCompat {
     }
 
     public static Optional<Attribute> getManaRegenAttribute() {
-        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "mana_regen")));
+        return lookup("mana_regen");
     }
 
     public static Optional<Attribute> getMaxManaAttribute() {
-        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "max_mana")));
+        return lookup("max_mana");
     }
 
     public static Optional<Attribute> getCooldownReductionAttribute() {
-        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "cooldown_reduction")));
+        return lookup("cooldown_reduction");
     }
 
     public static Optional<Attribute> getCastTimeReductionAttribute() {
-        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "cast_time_reduction")));
+        return lookup("cast_time_reduction");
     }
 
     public static Optional<Attribute> getSpellPowerAttribute() {
-        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, "spell_power")));
+        return lookup("spell_power");
+    }
+
+    private static Optional<Attribute> lookup(String path) {
+        return Optional.ofNullable(ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(IRONS_MOD_ID, path)));
     }
 }

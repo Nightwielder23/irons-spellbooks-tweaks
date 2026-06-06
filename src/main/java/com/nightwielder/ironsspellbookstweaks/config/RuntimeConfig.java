@@ -1,4 +1,4 @@
-// Resolves the effective config for the running server: global values overlaid with a per-world serverconfig file when present.
+// Overlays global config values with a per-world serverconfig file when one is present.
 package com.nightwielder.ironsspellbookstweaks.config;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 public final class RuntimeConfig {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/RuntimeConfig");
-    private static final String FILE_NAME = "irons_spellbooks_tweaks-server.toml";
 
     public static volatile double baseManaRegenPercent = -1.0;
     public static volatile int startingMaxMana = -1;
@@ -57,7 +56,7 @@ public final class RuntimeConfig {
 
     public static void resolve(MinecraftServer server) {
         applyGlobal();
-        Path overrideFile = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig").resolve(FILE_NAME);
+        Path overrideFile = server.getWorldPath(LevelResource.ROOT).resolve("serverconfig").resolve(Config.SERVER_CONFIG_FILE);
         if (Files.exists(overrideFile)) {
             overlayFromFile(overrideFile);
         }

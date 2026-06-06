@@ -1,4 +1,4 @@
-// Counters Iron's black hole pull on configured mobs. Full immunity pins the victim in place; partial scaling reduces deltaMovement. Follow black holes via entity join and leave events to avoid scanning every level each tick.
+// Pin fully-immune victims in place; reduce deltaMovement for partial immunity. Follow black holes via entity join and leave events to avoid scanning every level each tick.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;

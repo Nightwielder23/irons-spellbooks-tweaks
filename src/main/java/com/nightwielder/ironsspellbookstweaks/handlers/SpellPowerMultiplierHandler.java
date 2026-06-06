@@ -1,4 +1,3 @@
-// Scales every player's SPELL_POWER attribute by the configured multiplier on login and respawn.
 package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
