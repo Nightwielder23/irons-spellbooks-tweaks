@@ -13,6 +13,9 @@ public class SpellCastDimensionHandler {
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         List<? extends String> blockedDimensions = RuntimeConfig.spellCastingDisabledDimensions;
         if (blockedDimensions.isEmpty()) {
             return;

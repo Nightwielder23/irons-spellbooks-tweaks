@@ -1,19 +1,20 @@
-// Datapack reload listener for isstweaks/unlocks. Holds the parsed unlocks and a per-trigger lookup index.
+// Datapack reload listener for isstweaks/unlocks. Holds the parsed unlocks.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,8 +26,6 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
 
     // volatile + Map.copyOf gives lock-free atomic swap on reload; reads stay unsynchronized
     private static volatile Map<ResourceLocation, UnlockDefinition> unlocks = Map.of();
-    private static volatile Map<ResourceLocation, List<UnlockDefinition>> byAdvancement = Map.of();
-    private static volatile Map<ResourceLocation, List<UnlockDefinition>> byEntityKill = Map.of();
 
     public UnlockManager() {
         super(GSON, DIRECTORY);
@@ -35,8 +34,6 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> entries, ResourceManager resourceManager, ProfilerFiller profiler) {
         Map<ResourceLocation, UnlockDefinition> parsed = new HashMap<>();
-        Map<ResourceLocation, List<UnlockDefinition>> advancementIndex = new HashMap<>();
-        Map<ResourceLocation, List<UnlockDefinition>> entityKillIndex = new HashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : entries.entrySet()) {
             ResourceLocation id = entry.getKey();
             JsonElement element = entry.getValue();
@@ -47,12 +44,6 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
             try {
                 UnlockDefinition definition = UnlockJsonParser.parse(id, element.getAsJsonObject());
                 parsed.put(id, definition);
-                if (definition.getTrigger() instanceof AdvancementTrigger advancementTrigger) {
-                    advancementIndex.computeIfAbsent(advancementTrigger.advancementId(), k -> new ArrayList<>()).add(definition);
-                }
-                if (definition.getTrigger() instanceof EntityKillTrigger entityKillTrigger) {
-                    entityKillIndex.computeIfAbsent(entityKillTrigger.entityTypeId(), k -> new ArrayList<>()).add(definition);
-                }
             } catch (JsonParseException parseFailed) {
                 logger.warn("failed to parse unlock {}: {}", id, parseFailed.getMessage());
             } catch (RuntimeException unexpected) {
@@ -61,29 +52,24 @@ public class UnlockManager extends SimpleJsonResourceReloadListener {
             }
         }
         unlocks = Map.copyOf(parsed);
-        byAdvancement = freezeIndex(advancementIndex);
-        byEntityKill = freezeIndex(entityKillIndex);
-        logger.info("loaded {} unlocks ({} advancement-triggered, {} entity-kill-triggered)", unlocks.size(), byAdvancement.size(), byEntityKill.size());
+        UnlockEvaluator.rebuildIndex(unlocks.values());
+        // a /reload can add or loosen an unlock a logged-in player already qualifies for, so re-check everyone online instead of waiting for their next login
+        reevaluateOnlinePlayers();
+        logger.info("loaded {} unlocks", unlocks.size());
     }
 
-    private static Map<ResourceLocation, List<UnlockDefinition>> freezeIndex(Map<ResourceLocation, List<UnlockDefinition>> mutable) {
-        Map<ResourceLocation, List<UnlockDefinition>> frozen = new HashMap<>();
-        for (Map.Entry<ResourceLocation, List<UnlockDefinition>> indexed : mutable.entrySet()) {
-            frozen.put(indexed.getKey(), List.copyOf(indexed.getValue()));
+    private static void reevaluateOnlinePlayers() {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return;
         }
-        return Map.copyOf(frozen);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UnlockEvaluator.reevaluate(player);
+        }
     }
 
     public static Map<ResourceLocation, UnlockDefinition> getAll() {
         return unlocks;
-    }
-
-    public static List<UnlockDefinition> getByAdvancement(ResourceLocation advancementId) {
-        return byAdvancement.getOrDefault(advancementId, List.of());
-    }
-
-    public static List<UnlockDefinition> getByEntityKill(ResourceLocation entityTypeId) {
-        return byEntityKill.getOrDefault(entityTypeId, List.of());
     }
 
     public static Optional<UnlockDefinition> getById(ResourceLocation unlockId) {

@@ -27,6 +27,9 @@ public class BuffDurationHandler {
 
     @SubscribeEvent
     public static void onEffectAdded(MobEffectEvent.Added event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         if (!(event.getEntity() instanceof Player)) {
             return;
         }
@@ -81,7 +84,7 @@ public class BuffDurationHandler {
         return effect.getEffect().unwrapKey().map(ResourceKey::location).orElse(null);
     }
 
-    // Resolve the duration field once, trying the Mojmap name first and the Forge SRG name second.
+    // Resolve the duration field once. NeoForge runs Mojang mappings at runtime, so the mapped name resolves; the obfuscated name stays as a fallback shared with the Forge build.
     private static Field durationField() {
         if (durationFieldResolved) {
             return durationField;

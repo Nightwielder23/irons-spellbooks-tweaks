@@ -6,7 +6,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
@@ -25,8 +28,11 @@ public final class UnlockJsonParser {
         UnlockGrants grants = parseGrants(id, json);
         Optional<String> message = parseMessage(id, json);
         String requirementText = parseRequirementText(id, json);
-        return new UnlockDefinition(id, trigger, grants, message, requirementText);
+        String displayName = parseDisplayName(id, json);
+        return new UnlockDefinition(id, trigger, grants, message, requirementText, displayName);
     }
+
+    private static final int MAX_TRIGGER_DEPTH = 10;
 
     private static UnlockTrigger parseTrigger(ResourceLocation unlockId, JsonObject json) {
         if (!json.has("trigger")) {
@@ -36,7 +42,13 @@ public final class UnlockJsonParser {
         if (!triggerElement.isJsonObject()) {
             throw new JsonParseException("unlock " + unlockId + " 'trigger' must be a JSON object");
         }
-        JsonObject triggerJson = triggerElement.getAsJsonObject();
+        return parseTriggerObject(unlockId, triggerElement.getAsJsonObject(), 0);
+    }
+
+    private static UnlockTrigger parseTriggerObject(ResourceLocation unlockId, JsonObject triggerJson, int depth) {
+        if (depth > MAX_TRIGGER_DEPTH) {
+            throw new JsonParseException("unlock " + unlockId + " trigger is nested deeper than " + MAX_TRIGGER_DEPTH + " levels");
+        }
         if (!triggerJson.has("type") || !triggerJson.get("type").isJsonPrimitive()) {
             throw new JsonParseException("unlock " + unlockId + " trigger missing required string 'type'");
         }
@@ -47,7 +59,53 @@ public final class UnlockJsonParser {
         if ("entity_kill".equals(triggerType)) {
             return parseEntityKillTrigger(unlockId, triggerJson);
         }
+        if ("entity_kill_count".equals(triggerType)) {
+            return parseEntityKillCountTrigger(unlockId, triggerJson);
+        }
+        if ("all_of".equals(triggerType)) {
+            return new AllOfTrigger(parseChildren(unlockId, triggerJson, depth));
+        }
+        if ("any_of".equals(triggerType)) {
+            return new AnyOfTrigger(parseChildren(unlockId, triggerJson, depth));
+        }
         throw new JsonParseException("unlock " + unlockId + " has unknown trigger type '" + triggerType + "'");
+    }
+
+    private static EntityKillCountTrigger parseEntityKillCountTrigger(ResourceLocation unlockId, JsonObject triggerJson) {
+        if (!triggerJson.has("entity") || !triggerJson.get("entity").isJsonPrimitive()) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill_count trigger missing required string 'entity'");
+        }
+        String rawId = triggerJson.get("entity").getAsString();
+        ResourceLocation entityTypeId = ResourceLocation.tryParse(rawId);
+        if (entityTypeId == null) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill_count trigger has invalid entity type id '" + rawId + "'");
+        }
+        if (!triggerJson.has("required_kills") || !triggerJson.get("required_kills").isJsonPrimitive()) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill_count trigger missing required integer 'required_kills'");
+        }
+        int requiredCount = triggerJson.get("required_kills").getAsInt();
+        if (requiredCount < 1) {
+            throw new JsonParseException("unlock " + unlockId + " entity_kill_count trigger 'required_kills' must be at least 1");
+        }
+        return new EntityKillCountTrigger(entityTypeId, requiredCount);
+    }
+
+    private static List<UnlockTrigger> parseChildren(ResourceLocation unlockId, JsonObject triggerJson, int depth) {
+        if (!triggerJson.has("children") || !triggerJson.get("children").isJsonArray()) {
+            throw new JsonParseException("unlock " + unlockId + " composite trigger missing required array 'children'");
+        }
+        JsonArray array = triggerJson.get("children").getAsJsonArray();
+        if (array.isEmpty()) {
+            throw new JsonParseException("unlock " + unlockId + " composite trigger 'children' must not be empty");
+        }
+        List<UnlockTrigger> children = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonObject()) {
+                throw new JsonParseException("unlock " + unlockId + " composite trigger child must be a JSON object");
+            }
+            children.add(parseTriggerObject(unlockId, element.getAsJsonObject(), depth + 1));
+        }
+        return List.copyOf(children);
     }
 
     private static AdvancementTrigger parseAdvancementTrigger(ResourceLocation unlockId, JsonObject triggerJson) {
@@ -85,6 +143,9 @@ public final class UnlockJsonParser {
         }
         JsonObject grantsJson = grantsElement.getAsJsonObject();
 
+        if (grantsJson.has("spell_level_cap")) {
+            logger.warn("unlock {} uses 'spell_level_cap' grant, which is no longer supported (replaced by 'rarity_cap'). Ignoring.", unlockId);
+        }
         double cooldownReductionBonus = grantsJson.has("cooldown_reduction_bonus")
                 ? grantsJson.get("cooldown_reduction_bonus").getAsDouble()
                 : 0.0;
@@ -114,7 +175,7 @@ public final class UnlockJsonParser {
             return null;
         }
         String raw = element.getAsString();
-        String upper = raw.trim().toUpperCase();
+        String upper = raw.trim().toUpperCase(Locale.ROOT);
         if (!PlayerProgress.RARITY_RANKS.containsKey(upper)) {
             logger.warn("unlock {} 'rarity_cap' value '{}' is not a valid rarity, skipping", unlockId, raw);
             return null;
@@ -168,6 +229,18 @@ public final class UnlockJsonParser {
         JsonElement element = json.get("requirement_text");
         if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
             logger.warn("unlock {} 'requirement_text' is not a string, ignoring", unlockId);
+            return null;
+        }
+        return element.getAsString();
+    }
+
+    private static String parseDisplayName(ResourceLocation unlockId, JsonObject json) {
+        if (!json.has("display_name")) {
+            return null;
+        }
+        JsonElement element = json.get("display_name");
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+            logger.warn("unlock {} 'display_name' is not a string, ignoring", unlockId);
             return null;
         }
         return element.getAsString();

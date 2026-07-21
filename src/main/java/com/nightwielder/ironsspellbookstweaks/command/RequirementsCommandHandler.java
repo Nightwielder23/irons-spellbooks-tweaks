@@ -13,6 +13,7 @@ import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.SpellRarity;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
@@ -27,7 +28,10 @@ import net.minecraft.server.level.ServerPlayer;
 
 public final class RequirementsCommandHandler {
 
-    private static final String[] RARITY_NAMES = {"common", "uncommon", "rare", "epic", "legendary"};
+    private static final String[] RARITY_NAMES = PlayerProgress.RARITY_RANKS.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue())
+            .map(entry -> entry.getKey().toLowerCase(Locale.ROOT))
+            .toArray(String[]::new);
 
     public static final SuggestionProvider<CommandSourceStack> SPELL_ID_SUGGESTIONS = (context, builder) -> {
         List<ResourceLocation> ids = SpellRegistry.getEnabledSpells().stream()
@@ -71,13 +75,13 @@ public final class RequirementsCommandHandler {
     }
 
     public static int executeRarity(CommandContext<CommandSourceStack> context) {
-        String rawRarity = StringArgumentType.getString(context, "rarity").toLowerCase();
+        String rawRarity = StringArgumentType.getString(context, "rarity").toLowerCase(Locale.ROOT);
         CommandSourceStack source = context.getSource();
         if (!isKnownRarity(rawRarity)) {
             source.sendFailure(Component.literal("Unknown rarity: " + rawRarity));
             return 0;
         }
-        SpellRarity rarity = SpellRarity.valueOf(rawRarity.toUpperCase());
+        SpellRarity rarity = SpellRarity.valueOf(rawRarity.toUpperCase(Locale.ROOT));
         Component rarityLabel = buildRarityLabel(rarity, rawRarity);
         boolean unlocked = isRarityUnlockedFor(source, rarity);
         List<UnlockDefinition> matches = findUnlocksForRarity(rarity);

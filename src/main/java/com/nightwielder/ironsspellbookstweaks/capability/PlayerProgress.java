@@ -2,6 +2,7 @@
 package com.nightwielder.ironsspellbookstweaks.capability;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +24,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
     private static final String KEY_INSCRIPTIONS_REMOVED = "inscriptions_removed";
     private static final String KEY_GRANTED_UNLOCKS = "granted_unlocks";
     private static final String KEY_RARITY_CAP = "rarity_cap";
+    private static final String KEY_KILL_COUNTS = "entity_kill_counts";
 
     // Hardcoded rank order mirrors Iron's SpellRarity so this class stays free of Iron's class refs; the attachment layer then loads even when the soft-dep is absent.
     public static final Map<String, Integer> RARITY_RANKS = Map.of(
@@ -40,6 +42,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
     private final Set<ResourceLocation> dimensionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> inscriptionsRemoved = new HashSet<>();
     private final Set<ResourceLocation> grantedUnlocks = new HashSet<>();
+    private final Map<ResourceLocation, Integer> entityKillCounts = new HashMap<>();
     // null means no per-player rarity gate, so callers fall back to config. stored as the uppercase rarity name so this class never touches SpellRarity directly.
     private String rarityCap = null;
 
@@ -127,15 +130,48 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
         return grantedUnlocks.contains(unlockId);
     }
 
-    public void reset() {
+    public int getKillCount(ResourceLocation entityTypeId) {
+        return entityKillCounts.getOrDefault(entityTypeId, 0);
+    }
+
+    public int incrementKillCount(ResourceLocation entityTypeId) {
+        int next = getKillCount(entityTypeId) + 1;
+        entityKillCounts.put(entityTypeId, next);
+        return next;
+    }
+
+    public Map<ResourceLocation, Integer> getEntityKillCounts() {
+        return Collections.unmodifiableMap(entityKillCounts);
+    }
+
+    public void removeKillCount(ResourceLocation entityTypeId) {
+        entityKillCounts.remove(entityTypeId);
+    }
+
+    public void clearKillCounts() {
+        entityKillCounts.clear();
+    }
+
+    // Zero the additive bonuses and the removal sets so they can be rebuilt from the unlocks the player still holds. Leaves the granted set and kill counts alone.
+    public void clearBonuses() {
         cooldownReductionBonus = 0.0;
         castTimeReductionBonus = 0.0;
         maxManaBonus = 0;
         manaRegenBonus = 0.0;
         dimensionsRemoved.clear();
         inscriptionsRemoved.clear();
-        grantedUnlocks.clear();
         rarityCap = null;
+    }
+
+    // Drop every granted unlock and its bonuses. Kill counts stay so a bulk revoke does not undo grind progress.
+    public void clearAllGrants() {
+        clearBonuses();
+        grantedUnlocks.clear();
+    }
+
+    public void reset() {
+        clearAllGrants();
+        clearKillCounts();
     }
 
     @Override
@@ -148,6 +184,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
         tag.put(KEY_DIMENSIONS_REMOVED, writeIdSet(dimensionsRemoved));
         tag.put(KEY_INSCRIPTIONS_REMOVED, writeIdSet(inscriptionsRemoved));
         tag.put(KEY_GRANTED_UNLOCKS, writeIdSet(grantedUnlocks));
+        tag.put(KEY_KILL_COUNTS, writeKillCounts(entityKillCounts));
         if (rarityCap != null) {
             tag.putString(KEY_RARITY_CAP, rarityCap);
         }
@@ -164,6 +201,7 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
         readIdSet(tag, KEY_DIMENSIONS_REMOVED, dimensionsRemoved);
         readIdSet(tag, KEY_INSCRIPTIONS_REMOVED, inscriptionsRemoved);
         readIdSet(tag, KEY_GRANTED_UNLOCKS, grantedUnlocks);
+        readKillCounts(tag, KEY_KILL_COUNTS, entityKillCounts);
         rarityCap = readRarityCap(tag);
     }
 
@@ -194,6 +232,28 @@ public class PlayerProgress implements INBTSerializable<CompoundTag> {
             ResourceLocation parsed = ResourceLocation.tryParse(list.getString(i));
             if (parsed != null) {
                 target.add(parsed);
+            }
+        }
+    }
+
+    private static CompoundTag writeKillCounts(Map<ResourceLocation, Integer> counts) {
+        CompoundTag out = new CompoundTag();
+        for (Map.Entry<ResourceLocation, Integer> entry : counts.entrySet()) {
+            out.putInt(entry.getKey().toString(), entry.getValue());
+        }
+        return out;
+    }
+
+    private static void readKillCounts(CompoundTag tag, String key, Map<ResourceLocation, Integer> target) {
+        target.clear();
+        if (!tag.contains(key, Tag.TAG_COMPOUND)) {
+            return;
+        }
+        CompoundTag counts = tag.getCompound(key);
+        for (String idString : counts.getAllKeys()) {
+            ResourceLocation parsed = ResourceLocation.tryParse(idString);
+            if (parsed != null) {
+                target.put(parsed, counts.getInt(idString));
             }
         }
     }

@@ -4,7 +4,6 @@ package com.nightwielder.ironsspellbookstweaks.handlers;
 import com.nightwielder.ironsspellbookstweaks.IronsSpellbooksTweaks;
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig.ScalingConfig;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.lang.reflect.Method;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
@@ -50,9 +49,6 @@ public class SummonScalingHandler {
         if (event.getLevel().isClientSide) {
             return;
         }
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         Entity entity = event.getEntity();
         if (!(entity instanceof LivingEntity summon)) {
             return;
@@ -74,7 +70,7 @@ public class SummonScalingHandler {
     // multiplier scales the pre-armor damage, matching the 1.20.1 Forge behavior.
     @SubscribeEvent
     public static void onLivingDamage(LivingIncomingDamageEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
+        if (event.getEntity().level().isClientSide) {
             return;
         }
         ScalingConfig config = RuntimeConfig.scaling;

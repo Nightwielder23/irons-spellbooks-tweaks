@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -21,8 +22,12 @@ public class ManaRegenCancelHandler {
 
     private static final Logger logger = LogManager.getLogger("irons_spellbooks_tweaks/ManaRegenCancelHandler");
     private static final String MAGIC_DATA_CLASS = "io.redspace.ironsspellbooks.api.magic.MagicData";
+    // Cached once: this ticks every player every tick, too hot to run a ModList lookup each time.
+    private static final boolean IRONS_LOADED = IronsSpellbooksCompat.isLoaded();
 
     private static final Map<UUID, Float> lastKnownMana = new HashMap<>();
+    // Iron's returns the same MagicData container for a player, so cache it per entity rather than reflecting every tick; weak keys plus the logout removal stop respawned and departed players from lingering.
+    private static final Map<Player, Object> magicDataByPlayer = new WeakHashMap<>();
     private static boolean reflectionAvailable = true;
     private static boolean reflectionInitialized = false;
 
@@ -34,6 +39,7 @@ public class ManaRegenCancelHandler {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         lastKnownMana.remove(event.getEntity().getUUID());
+        magicDataByPlayer.remove(event.getEntity());
     }
 
     @SubscribeEvent
@@ -42,14 +48,14 @@ public class ManaRegenCancelHandler {
         if (player.level().isClientSide) {
             return;
         }
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         if (!RuntimeConfig.disableManaRegen) {
             // clear cache when feature is off so a re-enable starts fresh
             if (!lastKnownMana.isEmpty()) {
                 lastKnownMana.clear();
             }
+            return;
+        }
+        if (!IRONS_LOADED) {
             return;
         }
         if (!reflectionAvailable) {
@@ -81,7 +87,7 @@ public class ManaRegenCancelHandler {
 
     private static void applyDrainback(Player player) {
         try {
-            Object magicData = getPlayerMagicDataMethod.invoke(null, player);
+            Object magicData = resolveMagicData(player);
             if (magicData == null) {
                 return;
             }
@@ -103,5 +109,17 @@ public class ManaRegenCancelHandler {
             logger.warn("drainback failed for player {}, disabling for rest of runtime", player.getUUID(), drainbackFailed);
             reflectionAvailable = false;
         }
+    }
+
+    private static Object resolveMagicData(Player player) throws ReflectiveOperationException {
+        Object magicData = magicDataByPlayer.get(player);
+        if (magicData != null) {
+            return magicData;
+        }
+        magicData = getPlayerMagicDataMethod.invoke(null, player);
+        if (magicData != null) {
+            magicDataByPlayer.put(player, magicData);
+        }
+        return magicData;
     }
 }

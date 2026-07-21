@@ -2,7 +2,9 @@ package com.nightwielder.ironsspellbookstweaks;
 
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
 import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.BuffAmplifiedMeleeDamageHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.PerSpellScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellPowerMultiplierHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
@@ -36,6 +38,8 @@ public class IronsSpellbooksTweaks {
             NeoForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
             NeoForge.EVENT_BUS.register(SummonScalingHandler.class);
             NeoForge.EVENT_BUS.register(SpellPowerMultiplierHandler.class);
+            NeoForge.EVENT_BUS.register(PerSpellScalingHandler.class);
+            NeoForge.EVENT_BUS.register(BuffAmplifiedMeleeDamageHandler.class);
             logger.info("Iron's Spellbooks Tweaks loaded with Iron's integration");
         } else {
             logger.info("Iron's Spellbooks not detected, gated handlers (inscription, dimension, rarity, black hole, summons) will not be registered");

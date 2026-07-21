@@ -17,6 +17,9 @@ public class SpellRarityGateHandler {
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         SpellRarity configThreshold = parseRarity(RuntimeConfig.maxSpellRarity);
         Player player = event.getEntity();
         PlayerProgress progress = player.getData(PlayerProgressAttachments.PLAYER_PROGRESS);

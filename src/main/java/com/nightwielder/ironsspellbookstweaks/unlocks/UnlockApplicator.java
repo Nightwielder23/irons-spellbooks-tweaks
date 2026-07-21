@@ -4,7 +4,10 @@ package com.nightwielder.ironsspellbookstweaks.unlocks;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressAttachments;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
+import java.util.Optional;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +26,24 @@ public final class UnlockApplicator {
         if (progress.hasUnlockGranted(unlock.getId())) {
             return;
         }
-        UnlockGrants grants = unlock.getGrants();
+        applyGrants(progress, unlock.getGrants());
+        progress.markUnlockGranted(unlock.getId());
+        ManaAttributeHandler.refreshProgressModifiers(player);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.sendSystemMessage(unlockMessage(unlock));
+        }
+        logger.info("applied unlock {} to player {}", unlock.getId(), player.getName().getString());
+    }
+
+    // Rebuild the additive bonuses from the unlocks the player still holds, then refresh the attribute modifiers. No message and no change to the granted set, since these unlocks are already earned. Callers strip the old modifiers first so a bonus that dropped to zero is not left behind.
+    public static void reapplyGrants(Player player, PlayerProgress progress) {
+        for (ResourceLocation unlockId : progress.getGrantedUnlocks()) {
+            UnlockManager.getById(unlockId).ifPresent(unlock -> applyGrants(progress, unlock.getGrants()));
+        }
+        ManaAttributeHandler.refreshProgressModifiers(player);
+    }
+
+    private static void applyGrants(PlayerProgress progress, UnlockGrants grants) {
         if (grants.getCooldownReductionBonus() != 0.0) {
             progress.addCooldownBonus(grants.getCooldownReductionBonus());
         }
@@ -45,13 +65,21 @@ public final class UnlockApplicator {
         if (grants.getRarityCap() != null) {
             progress.raiseRarityCap(grants.getRarityCap());
         }
-        progress.markUnlockGranted(unlock.getId());
-        ManaAttributeHandler.refreshProgressModifiers(player);
-        unlock.getMessage().ifPresent(messageText -> {
-            if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.sendSystemMessage(Component.literal(messageText));
-            }
-        });
-        logger.info("applied unlock {} to player {}", unlock.getId(), player.getName().getString());
+    }
+
+    // A pack-provided message wins; without one, announce the unlock and summarize its grants in parens.
+    private static Component unlockMessage(UnlockDefinition unlock) {
+        Optional<String> custom = unlock.getMessage();
+        if (custom.isPresent()) {
+            return Component.literal(custom.get());
+        }
+        MutableComponent message = Component.empty()
+                .append(Component.literal("Unlock earned: ").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal(UnlockDescriber.displayName(unlock)).withStyle(ChatFormatting.YELLOW));
+        String summary = UnlockDescriber.grantSummary(unlock.getGrants());
+        if (!summary.isEmpty()) {
+            message.append(Component.literal(" (" + summary + ")"));
+        }
+        return message;
     }
 }
