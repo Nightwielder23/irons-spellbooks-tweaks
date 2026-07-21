@@ -4,11 +4,13 @@ import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressEventHandler;
 import com.nightwielder.ironsspellbookstweaks.command.ISSTweaksCommandRegistry;
 import com.nightwielder.ironsspellbookstweaks.handlers.BlackHoleResistanceHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.BuffAmplifiedMeleeDamageHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.BuffDurationHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ConfigOverrideHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.InscriptionBlacklistHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaAttributeHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.ManaRegenCancelHandler;
+import com.nightwielder.ironsspellbookstweaks.handlers.PerSpellScalingHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellCastDimensionHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellPowerMultiplierHandler;
 import com.nightwielder.ironsspellbookstweaks.handlers.SpellRarityGateHandler;
@@ -28,7 +30,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod("irons_spellbooks_tweaks")
+@Mod(IronsSpellbooksTweaks.MOD_ID)
 public class IronsSpellbooksTweaks {
 
     public static final String MOD_ID = "irons_spellbooks_tweaks";
@@ -51,6 +53,8 @@ public class IronsSpellbooksTweaks {
             MinecraftForge.EVENT_BUS.register(BlackHoleResistanceHandler.class);
             MinecraftForge.EVENT_BUS.register(SummonScalingHandler.class);
             MinecraftForge.EVENT_BUS.register(SpellPowerMultiplierHandler.class);
+            MinecraftForge.EVENT_BUS.register(PerSpellScalingHandler.class);
+            MinecraftForge.EVENT_BUS.register(BuffAmplifiedMeleeDamageHandler.class);
         }
         MinecraftForge.EVENT_BUS.register(PlayerProgressEventHandler.class);
         MinecraftForge.EVENT_BUS.register(UnlockManagerRegistry.class);

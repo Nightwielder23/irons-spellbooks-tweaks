@@ -5,8 +5,12 @@ import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgress;
 import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.DoublePredicate;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -31,6 +35,42 @@ public class ManaAttributeHandler {
     private static final ModifierId MAX_MANA_PROGRESS_ID = new ModifierId("93f8e174-b4a5-a576-5283-708192a30425", "ist_max_mana_progress");
     private static final ModifierId MANA_REGEN_PROGRESS_ID = new ModifierId("a409f285-c5b6-b687-6394-8192a304a536", "ist_mana_regen_progress");
 
+    // The two override bonuses use -1 as a disable sentinel; everything else is off only at exactly zero.
+    private static final DoublePredicate APPLIED_WHEN_NON_NEGATIVE = value -> value >= 0;
+    private static final DoublePredicate APPLIED_WHEN_NONZERO = value -> value != 0.0;
+
+    private static final List<ManaModifierRow> CONFIG_ROWS = List.of(
+            new ManaModifierRow("baseManaRegenPercent override",
+                    player -> RuntimeConfig.baseManaRegenPercent, APPLIED_WHEN_NON_NEGATIVE,
+                    IronsSpellbooksCompat::getManaRegenAttribute, MANA_REGEN_OVERRIDE_ID,
+                    "MANA_REGEN attribute not registered, skipping baseManaRegenPercent override"),
+            new ManaModifierRow("startingMaxMana override",
+                    player -> RuntimeConfig.startingMaxMana, APPLIED_WHEN_NON_NEGATIVE,
+                    IronsSpellbooksCompat::getMaxManaAttribute, MAX_MANA_OVERRIDE_ID,
+                    "MAX_MANA attribute not registered, skipping startingMaxMana override"),
+            new ManaModifierRow("cooldownReductionBonus",
+                    player -> RuntimeConfig.cooldownReductionBonus, APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getCooldownReductionAttribute, COOLDOWN_REDUCTION_BONUS_ID,
+                    "COOLDOWN_REDUCTION attribute not registered, skipping cooldownReductionBonus"),
+            new ManaModifierRow("castTimeReductionBonus",
+                    player -> RuntimeConfig.castTimeReductionBonus, APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getCastTimeReductionAttribute, CAST_TIME_REDUCTION_BONUS_ID,
+                    "CAST_TIME_REDUCTION attribute not registered, skipping castTimeReductionBonus"));
+
+    private static final List<ManaModifierRow> PROGRESS_ROWS = List.of(
+            new ManaModifierRow("progress cooldown bonus",
+                    player -> progress(player, PlayerProgress::getCooldownReductionBonus), APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getCooldownReductionAttribute, COOLDOWN_REDUCTION_PROGRESS_ID, null),
+            new ManaModifierRow("progress cast time bonus",
+                    player -> progress(player, PlayerProgress::getCastTimeReductionBonus), APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getCastTimeReductionAttribute, CAST_TIME_REDUCTION_PROGRESS_ID, null),
+            new ManaModifierRow("progress max mana bonus",
+                    player -> progress(player, p -> (double) p.getMaxManaBonus()), APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getMaxManaAttribute, MAX_MANA_PROGRESS_ID, null),
+            new ManaModifierRow("progress mana regen bonus",
+                    player -> progress(player, PlayerProgress::getManaRegenBonus), APPLIED_WHEN_NONZERO,
+                    IronsSpellbooksCompat::getManaRegenAttribute, MANA_REGEN_PROGRESS_ID, null));
+
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         applyAll(event.getEntity());
@@ -46,14 +86,12 @@ public class ManaAttributeHandler {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        applyManaRegenOverride(player);
-        applyMaxManaOverride(player);
-        applyCooldownReductionBonus(player);
-        applyCastTimeReductionBonus(player);
-        applyProgressCooldownBonus(player);
-        applyProgressCastTimeBonus(player);
-        applyProgressMaxManaBonus(player);
-        applyProgressManaRegenBonus(player);
+        for (ManaModifierRow row : CONFIG_ROWS) {
+            apply(player, row);
+        }
+        for (ManaModifierRow row : PROGRESS_ROWS) {
+            apply(player, row);
+        }
     }
 
     // Called by UnlockApplicator when an unlock fires mid-session so the new bonus shows up before next login.
@@ -61,126 +99,48 @@ public class ManaAttributeHandler {
         if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        applyProgressCooldownBonus(player);
-        applyProgressCastTimeBonus(player);
-        applyProgressMaxManaBonus(player);
-        applyProgressManaRegenBonus(player);
+        for (ManaModifierRow row : PROGRESS_ROWS) {
+            apply(player, row);
+        }
     }
 
-    private static void applyManaRegenOverride(Player player) {
-        double configuredValue = RuntimeConfig.baseManaRegenPercent;
-        if (configuredValue < 0) {
+    // Pull every progress-sourced modifier off the player. Revoke and reset call this before rebuilding, since apply() leaves a stale modifier in place when its bonus drops to zero.
+    public static void stripProgressModifiers(Player player) {
+        if (!IronsSpellbooksCompat.isLoaded()) {
             return;
         }
-        Optional<Attribute> manaRegenAttribute = IronsSpellbooksCompat.getManaRegenAttribute();
-        if (manaRegenAttribute.isEmpty()) {
-            logger.warn("MANA_REGEN attribute not registered, skipping baseManaRegenPercent override");
-            return;
+        for (ManaModifierRow row : PROGRESS_ROWS) {
+            Optional<Attribute> attribute = row.attribute().get();
+            if (attribute.isEmpty()) {
+                continue;
+            }
+            AttributeInstance instance = player.getAttribute(attribute.get());
+            if (instance != null) {
+                instance.removeModifier(row.modifier().uuid());
+            }
         }
-        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_OVERRIDE_ID, configuredValue);
-        logger.info("applied baseManaRegenPercent override to {}: {}", player.getName().getString(), configuredValue);
     }
 
-    private static void applyMaxManaOverride(Player player) {
-        int configuredValue = RuntimeConfig.startingMaxMana;
-        if (configuredValue < 0) {
+    private static void apply(Player player, ManaModifierRow row) {
+        double value = row.value().applyAsDouble(player);
+        if (!row.appliedWhen().test(value)) {
             return;
         }
-        Optional<Attribute> maxManaAttribute = IronsSpellbooksCompat.getMaxManaAttribute();
-        if (maxManaAttribute.isEmpty()) {
-            logger.warn("MAX_MANA attribute not registered, skipping startingMaxMana override");
+        Optional<Attribute> attribute = row.attribute().get();
+        if (attribute.isEmpty()) {
+            if (row.missingAttributeWarning() != null) {
+                logger.warn(row.missingAttributeWarning());
+            }
             return;
         }
-        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_OVERRIDE_ID, configuredValue);
-        logger.info("applied startingMaxMana override to {}: {}", player.getName().getString(), configuredValue);
+        applyAdditiveOverride(player, attribute.get(), row.modifier(), value);
+        logger.info("applied {} to {}: {}", row.label(), player.getName().getString(), value);
     }
 
-    private static void applyCooldownReductionBonus(Player player) {
-        double configuredValue = RuntimeConfig.cooldownReductionBonus;
-        if (configuredValue == 0.0) {
-            return;
-        }
-        Optional<Attribute> cooldownReductionAttribute = IronsSpellbooksCompat.getCooldownReductionAttribute();
-        if (cooldownReductionAttribute.isEmpty()) {
-            logger.warn("COOLDOWN_REDUCTION attribute not registered, skipping cooldownReductionBonus");
-            return;
-        }
-        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_BONUS_ID, configuredValue);
-        logger.info("applied cooldownReductionBonus to {}: {}", player.getName().getString(), configuredValue);
-    }
-
-    private static void applyCastTimeReductionBonus(Player player) {
-        double configuredValue = RuntimeConfig.castTimeReductionBonus;
-        if (configuredValue == 0.0) {
-            return;
-        }
-        Optional<Attribute> castTimeReductionAttribute = IronsSpellbooksCompat.getCastTimeReductionAttribute();
-        if (castTimeReductionAttribute.isEmpty()) {
-            logger.warn("CAST_TIME_REDUCTION attribute not registered, skipping castTimeReductionBonus");
-            return;
-        }
-        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_BONUS_ID, configuredValue);
-        logger.info("applied castTimeReductionBonus to {}: {}", player.getName().getString(), configuredValue);
-    }
-
-    private static void applyProgressCooldownBonus(Player player) {
-        double progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
-                .map(PlayerProgress::getCooldownReductionBonus)
+    private static double progress(Player player, ToDoubleFunction<PlayerProgress> getter) {
+        return player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
+                .map(getter::applyAsDouble)
                 .orElse(0.0);
-        if (progressValue == 0.0) {
-            return;
-        }
-        Optional<Attribute> cooldownReductionAttribute = IronsSpellbooksCompat.getCooldownReductionAttribute();
-        if (cooldownReductionAttribute.isEmpty()) {
-            return;
-        }
-        applyAdditiveOverride(player, cooldownReductionAttribute.get(), COOLDOWN_REDUCTION_PROGRESS_ID, progressValue);
-        logger.info("applied progress cooldown bonus to {}: {}", player.getName().getString(), progressValue);
-    }
-
-    private static void applyProgressCastTimeBonus(Player player) {
-        double progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
-                .map(PlayerProgress::getCastTimeReductionBonus)
-                .orElse(0.0);
-        if (progressValue == 0.0) {
-            return;
-        }
-        Optional<Attribute> castTimeReductionAttribute = IronsSpellbooksCompat.getCastTimeReductionAttribute();
-        if (castTimeReductionAttribute.isEmpty()) {
-            return;
-        }
-        applyAdditiveOverride(player, castTimeReductionAttribute.get(), CAST_TIME_REDUCTION_PROGRESS_ID, progressValue);
-        logger.info("applied progress cast time bonus to {}: {}", player.getName().getString(), progressValue);
-    }
-
-    private static void applyProgressMaxManaBonus(Player player) {
-        int progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
-                .map(PlayerProgress::getMaxManaBonus)
-                .orElse(0);
-        if (progressValue == 0) {
-            return;
-        }
-        Optional<Attribute> maxManaAttribute = IronsSpellbooksCompat.getMaxManaAttribute();
-        if (maxManaAttribute.isEmpty()) {
-            return;
-        }
-        applyAdditiveOverride(player, maxManaAttribute.get(), MAX_MANA_PROGRESS_ID, progressValue);
-        logger.info("applied progress max mana bonus to {}: {}", player.getName().getString(), progressValue);
-    }
-
-    private static void applyProgressManaRegenBonus(Player player) {
-        double progressValue = player.getCapability(PlayerProgressProvider.PLAYER_PROGRESS)
-                .map(PlayerProgress::getManaRegenBonus)
-                .orElse(0.0);
-        if (progressValue == 0.0) {
-            return;
-        }
-        Optional<Attribute> manaRegenAttribute = IronsSpellbooksCompat.getManaRegenAttribute();
-        if (manaRegenAttribute.isEmpty()) {
-            return;
-        }
-        applyAdditiveOverride(player, manaRegenAttribute.get(), MANA_REGEN_PROGRESS_ID, progressValue);
-        logger.info("applied progress mana regen bonus to {}: {}", player.getName().getString(), progressValue);
     }
 
     private static void applyAdditiveOverride(Player player, Attribute attribute, ModifierId modifier, double value) {
@@ -192,6 +152,10 @@ public class ManaAttributeHandler {
         instance.removeModifier(modifier.uuid());
         AttributeModifier attributeModifier = new AttributeModifier(modifier.uuid(), modifier.name(), value, AttributeModifier.Operation.ADDITION);
         instance.addPermanentModifier(attributeModifier);
+    }
+
+    private record ManaModifierRow(String label, ToDoubleFunction<Player> value, DoublePredicate appliedWhen,
+            Supplier<Optional<Attribute>> attribute, ModifierId modifier, String missingAttributeWarning) {
     }
 
     private record ModifierId(UUID uuid, String name) {

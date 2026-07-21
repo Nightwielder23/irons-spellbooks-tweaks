@@ -12,6 +12,9 @@ public class InscriptionBlacklistHandler {
 
     @SubscribeEvent
     public static void onInscribeSpell(InscribeSpellEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         List<? extends String> blacklist = RuntimeConfig.inscriptionBlacklist;
         if (blacklist.isEmpty()) {
             return;

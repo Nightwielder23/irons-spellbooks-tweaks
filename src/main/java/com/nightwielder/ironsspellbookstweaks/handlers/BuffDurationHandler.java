@@ -24,6 +24,9 @@ public class BuffDurationHandler {
 
     @SubscribeEvent
     public static void onEffectAdded(MobEffectEvent.Added event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         if (!(event.getEntity() instanceof Player)) {
             return;
         }

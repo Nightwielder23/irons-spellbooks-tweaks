@@ -17,6 +17,9 @@ public class SpellRarityGateHandler {
 
     @SubscribeEvent
     public static void onSpellPreCast(SpellPreCastEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
         SpellRarity configThreshold = parseRarity(RuntimeConfig.maxSpellRarity);
         Player player = event.getEntity();
         // resolve() converts LazyOptional to plain Optional so a null mapped value does not blow up Optional.of inside LazyOptional.map

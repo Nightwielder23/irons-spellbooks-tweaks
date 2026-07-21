@@ -1,4 +1,4 @@
-// One parsed unlock JSON: identity, trigger condition, what it grants, and an optional flavor message.
+// One parsed unlock JSON: identity, trigger condition, what it grants, an optional flavor message, requirement text, and a display name.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
 import java.util.Optional;
@@ -11,13 +11,15 @@ public final class UnlockDefinition {
     private final UnlockGrants grants;
     private final Optional<String> message;
     private final String requirementText;
+    private final String displayName;
 
-    public UnlockDefinition(ResourceLocation id, UnlockTrigger trigger, UnlockGrants grants, Optional<String> message, String requirementText) {
+    public UnlockDefinition(ResourceLocation id, UnlockTrigger trigger, UnlockGrants grants, Optional<String> message, String requirementText, String displayName) {
         this.id = id;
         this.trigger = trigger;
         this.grants = grants;
         this.message = message;
         this.requirementText = requirementText;
+        this.displayName = displayName;
     }
 
     public ResourceLocation getId() {
@@ -38,6 +40,10 @@ public final class UnlockDefinition {
 
     public String getRequirementText() {
         return requirementText;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.nightwielder.ironsspellbookstweaks.handlers;
 
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig;
 import com.nightwielder.ironsspellbookstweaks.config.RuntimeConfig.ScalingConfig;
-import com.nightwielder.ironsspellbookstweaks.util.IronsSpellbooksCompat;
 import java.lang.reflect.Method;
 import java.util.UUID;
 import net.minecraft.world.damagesource.DamageSource;
@@ -48,9 +47,6 @@ public class SummonScalingHandler {
         if (event.getLevel().isClientSide) {
             return;
         }
-        if (!IronsSpellbooksCompat.isLoaded()) {
-            return;
-        }
         Entity entity = event.getEntity();
         if (!(entity instanceof LivingEntity summon)) {
             return;
@@ -70,7 +66,7 @@ public class SummonScalingHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (!IronsSpellbooksCompat.isLoaded()) {
+        if (event.getEntity().level().isClientSide) {
             return;
         }
         ScalingConfig config = RuntimeConfig.scaling;

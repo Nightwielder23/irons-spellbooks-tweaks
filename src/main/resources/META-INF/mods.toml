@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="[47,)"
 license="MIT"
-issueTrackerURL="https://github.com/nightwielder23/irons-spellbooks-tweaks/issues"
+issueTrackerURL="https://github.com/Nightwielder23/irons-spellbooks-tweaks/issues"
 
 [[mods]]
 modId="irons_spellbooks_tweaks"
 version="\${file.jarVersion}"
 displayName="Iron's Spellbooks Tweaks"
-authors="nightwielder23"
+authors="Nightwielder23"
 description='''${mod_description}'''
 
 [[dependencies.irons_spellbooks_tweaks]]

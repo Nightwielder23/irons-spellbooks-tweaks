@@ -108,15 +108,45 @@ Multiplier applied to a summoned horse's base HP. Iron's already scales horse ba
 **`summonSwordsDamageMultiplier`** (default `1.0`, range `0.0` to `10.0`)
 Multiplier applied to Summon Swords damage per hit. `0.0` reduces every hit to zero.
 
+### `[per_spell]`
+
+Scales damage, cooldown, or mana cost for individual spells. Each setting is a list of `"spell_id:multiplier"` strings, where the multiplier is a number from `0.0` to `10.0`. A multiplier of `1.0` leaves a spell unchanged. A malformed entry is skipped and written to the log as a warning, so a bad string does not crash the mod and does not disappear without notice. The parser warns separately when an entry has no colon before the multiplier, when the spell ID does not parse, and when the multiplier is not a number, and each warning names the list the entry came from. A spell ID that no installed mod registers never matches anything. The colon between the spell ID and the multiplier is read from the end of the string, so a spell ID that already contains a colon still parses correctly.
+
+**`damageMultipliers`** (default empty list)
+Multiplier applied to the damage each listed spell deals. This stacks on top of `spellPowerMultiplier`, so a spell set to `2.0` here with `spellPowerMultiplier = 2.0` deals about four times its unscaled damage:
+```toml
+damageMultipliers = ["irons_spellbooks:fireball:1.5", "irons_spellbooks:magic_missile:0.5"]
+```
+
+Most spells deal their damage directly, and this multiplier reaches that damage through Iron's `SpellDamageEvent`. Some spells work another way: they apply a buff that raises the caster's own melee hits, and that damage never passes through `SpellDamageEvent`. A separate hook reads the same list and covers those spells. On this build the hook handles Spider Aspect (`irons_spellbooks:spider_aspect`). Echoing Strike is not one of them, because its echo hit still uses the direct path, so you scale it with the key `irons_spellbooks:echoing_strikes`.
+
+**`cooldownMultipliers`** (default empty list)
+Multiplier applied to each listed spell's cooldown. Below `1.0` shortens the cooldown and above `1.0` lengthens it. This is a separate factor from the player's `COOLDOWN_REDUCTION` attribute, so it multiplies the cooldown that already has that attribute applied:
+```toml
+cooldownMultipliers = ["irons_spellbooks:teleport:0.5"]
+```
+
+**`manaCostMultipliers`** (default empty list)
+Multiplier applied to each listed spell's mana cost. Below `1.0` makes a spell cheaper and above `1.0` makes it more expensive. This stacks on top of Iron's own per-spell `mana_cost_multiplier` config and multiplies the cost it produces. For a continuous spell the multiplier applies to each tick of mana the spell charges:
+```toml
+manaCostMultipliers = ["irons_spellbooks:fireball:0.75"]
+```
+
 ## Per-player progression unlocks
 
-A datapack-driven unlock system gates Iron's features behind advancements or boss kills. Unlock JSONs live at `data/<namespace>/isstweaks/unlocks/<id>.json`.
+A datapack-driven unlock system gates Iron's features behind advancements or boss kills. Unlock JSONs go in `data/<namespace>/isstweaks/unlocks/<id>.json`.
 
 ### Triggers
 
 **`advancement`**: fires when a player earns a specific advancement. Retroactively scans on login so existing players get unlocks they qualify for.
 
-**`entity_kill`**: fires when a player kills an entity matching the given type ID. Useful for mods that don't include boss kill advancements (Iron's Spellbooks itself, Ice and Fire, etc). Doesn't replay retroactively since past kills aren't recorded.
+**`entity_kill`**: fires when a player kills an entity matching the given type ID. Useful for mods that don't include boss kill advancements (Iron's Spellbooks itself, Ice and Fire, and similar). The player's kills of that entity type are counted and saved, so this trigger also resolves on login once the count is at least one. Only kills made after some unlock started referencing the entity type are counted.
+
+**`entity_kill_count`**: fires once the player has killed the given entity type a set number of times. Takes an `entity` for the entity type and a `required_kills` value of at least one. The running total is saved with the player, so progress carries across logins and deaths.
+
+**`all_of`**: a composite trigger that fires when every child trigger is satisfied. Takes a `children` array of one or more triggers. A child can itself be a composite, with up to ten levels of nesting.
+
+**`any_of`**: a composite trigger that fires when any one of its child triggers is satisfied. Takes a `children` array of one or more triggers. A child can itself be a composite.
 
 ### Grants
 
@@ -131,8 +161,14 @@ Each unlock can grant any combination of:
 
 ### Optional fields
 
+**`message`** (optional string)
+The chat message the player sees when the unlock fires. If omitted the mod builds one from the display name and the listed grants, for example `Unlock earned: Zombie Slayer (+100 max mana, +10% cooldown reduction)`. Set the field to send your own message instead.
+
 **`requirement_text`** (optional string)
 Hint text shown to players when they run `/isstweaks requirements`. Should describe what the player needs to do to earn the unlock. If omitted the command tells the player no requirement text was provided.
+
+**`display_name`** (optional string)
+The name shown for the unlock in `/isstweaks unlocks` and the granted unlocks list in `/isstweaks status`. If omitted the command builds a name from the unlock id by dropping the namespace, swapping underscores for spaces and slashes for " - ", and capitalizing each word, so `mypack:bosses/dead_king` reads as "Bosses - Dead King".
 
 ### Examples
 
@@ -148,7 +184,8 @@ Lock fireball behind killing the Dead King. In your pack's datapack at `data/myp
     "remove_inscriptions": ["irons_spellbooks:fireball"]
   },
   "message": "Fireball unlocked.",
-  "requirement_text": "Defeat the Dead King to unlock"
+  "requirement_text": "Defeat the Dead King to unlock",
+  "display_name": "Fireball Mastery"
 }
 ```
 
@@ -172,16 +209,59 @@ Tier-up the player's spell ceiling on a boss kill. With `maxSpellRarity = "rare"
 
 The grant is raise-only, so a later unlock that tries to set `rarity_cap` to `uncommon` would be ignored.
 
+Require more than one condition with a nested composite. The player must defeat the Fire Boss and also either earn an advancement or kill ten blazes:
+
+```json
+{
+  "trigger": {
+    "type": "all_of",
+    "children": [
+      {
+        "type": "entity_kill",
+        "id": "irons_spellbooks:fire_boss"
+      },
+      {
+        "type": "any_of",
+        "children": [
+          {
+            "type": "advancement",
+            "id": "minecraft:nether/all_effects"
+          },
+          {
+            "type": "entity_kill_count",
+            "entity": "minecraft:blaze",
+            "required_kills": 10
+          }
+        ]
+      }
+    ]
+  },
+  "grants": {
+    "rarity_cap": "epic"
+  },
+  "message": "Epic spells unlocked.",
+  "requirement_text": "Defeat the Fire Boss, then either finish the Nether effects advancement or slay 10 blazes"
+}
+```
+
 ## Commands
 
 OP-only:
 - `/isstweaks grant <player> <unlock_id>`: grant an unlock manually
-- `/isstweaks revoke <player> <unlock_id>`: remove from the granted set (cumulative bonuses stay applied; use reset for a clean slate)
-- `/isstweaks status <player>`: show the player's current progress
-- `/isstweaks reset <player>`: wipe all progression data for the player
+- `/isstweaks revoke <player> [<unlock_id>]`: take unlocks back and rebuild the player's bonuses so they are actually removed, not just dropped from the granted list. Name an unlock to revoke that one, or leave it off to revoke every unlock the player holds. Revoking one unlock also forgets the player's kills of any entity that no other loaded unlock still needs, and revoking every unlock clears all kill counts.
+- `/isstweaks status <player>`: show another player's current progress
+- `/isstweaks reset [<player>]`: wipe all progression data. Name a player to reset them, or leave the name off to reset your own progress. Run from the console with no name, it reports that the command must be run by a player. Both forms need permission level 2.
 - `/isstweaks copyconfig`: copy the global config into the current world's serverconfig folder. Does not overwrite an existing per-world file.
 
 Open to all players:
+- `/isstweaks status`: show your own progress. Run from the console with no player named, it reports that the command must be run by a player.
+- `/isstweaks unlocks`: list every loaded unlock. Each line shows a status tag, the unlock name, its requirement, your progress toward it, and the bonuses it grants. The tag reads `[Unlocked]` in green once you hold the unlock, `[In Progress]` in yellow while you have some progress toward it, or `[Not Started]` in red before you have started.
+- `/isstweaks unlocks all`: list every loaded unlock, the same as the bare command with no filter word.
+- `/isstweaks unlocks completed`: list only the unlocks you already hold.
+- `/isstweaks unlocks incomplete`: list only the unlocks you have not earned.
+- `/isstweaks unlocks in-progress`: list only the unlocks you have started but not finished, meaning the ones tagged `[In Progress]`.
+- `/isstweaks unlocks not-started`: list only the unlocks you have no progress on at all, meaning the ones tagged `[Not Started]`.
+- `/isstweaks unlocks <unlock_id>`: show the full requirement, the bonuses it grants, and the progress breakdown for one unlock.
 - `/isstweaks requirements spell <spell_id>`: shows the unlock requirement for a specific spell. Output is prefixed with `[Unlocked]` if the calling player has already met the requirement.
 - `/isstweaks requirements rarity <rarity>`: shows the unlock requirement for a rarity tier (`common`, `uncommon`, `rare`, `epic`, `legendary`). Same `[Unlocked]` indicator if the player's current rarity cap is at or above the queried tier.
 

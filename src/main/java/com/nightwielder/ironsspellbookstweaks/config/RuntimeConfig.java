@@ -35,6 +35,9 @@ public final class RuntimeConfig {
     public static volatile String maxSpellRarity = "";
     public static volatile List<String> inscriptionBlacklist = List.of();
     public static volatile List<String> blackholeImmunity = List.of();
+    public static volatile List<String> spellDamageMultipliersRaw = List.of();
+    public static volatile List<String> spellCooldownMultipliersRaw = List.of();
+    public static volatile List<String> spellManaCostMultipliersRaw = List.of();
     public static volatile double summonVexHpMultiplier = 1.0;
     public static volatile double summonVexDamageMultiplier = 1.0;
     public static volatile double raiseDeadHpMultiplier = 1.0;
@@ -46,6 +49,9 @@ public final class RuntimeConfig {
 
     public static volatile ScalingConfig scaling;
     public static volatile Map<ResourceLocation, Double> blackholeImmunityMap = Map.of();
+    public static volatile Map<String, Double> spellDamageMultipliers = Map.of();
+    public static volatile Map<String, Double> spellCooldownMultipliers = Map.of();
+    public static volatile Map<String, Double> spellManaCostMultipliers = Map.of();
 
     static {
         rebuildDerived();
@@ -81,6 +87,9 @@ public final class RuntimeConfig {
         maxSpellRarity = normalizeRarity(Config.MAX_SPELL_RARITY.get());
         inscriptionBlacklist = copyStrings(Config.INSCRIPTION_BLACKLIST.get());
         blackholeImmunity = copyStrings(Config.BLACKHOLE_IMMUNITY.get());
+        spellDamageMultipliersRaw = copyStrings(Config.SPELL_DAMAGE_MULTIPLIERS.get());
+        spellCooldownMultipliersRaw = copyStrings(Config.SPELL_COOLDOWN_MULTIPLIERS.get());
+        spellManaCostMultipliersRaw = copyStrings(Config.SPELL_MANA_COST_MULTIPLIERS.get());
         summonVexHpMultiplier = clamp(Config.SUMMON_VEX_HP_MULTIPLIER.get(), 0.0, 10.0);
         summonVexDamageMultiplier = clamp(Config.SUMMON_VEX_DAMAGE_MULTIPLIER.get(), 0.0, 10.0);
         raiseDeadHpMultiplier = clamp(Config.RAISE_DEAD_HP_MULTIPLIER.get(), 0.0, 10.0);
@@ -94,26 +103,29 @@ public final class RuntimeConfig {
     private static void overlayFromFile(Path overrideFile) {
         try (CommentedFileConfig file = CommentedFileConfig.builder(overrideFile).build()) {
             file.load();
-            baseManaRegenPercent = overlayDouble(file, List.of("mana", "baseManaRegenPercent"), baseManaRegenPercent, -1.0, 100.0);
-            startingMaxMana = overlayInt(file, List.of("mana", "startingMaxMana"), startingMaxMana, -1, 100000);
-            disableManaRegen = overlayBoolean(file, List.of("mana", "disableManaRegen"), disableManaRegen);
-            cooldownReductionBonus = overlayDouble(file, List.of("cooldown", "cooldownReductionBonus"), cooldownReductionBonus, -10.0, 10.0);
-            castTimeReductionBonus = overlayDouble(file, List.of("cooldown", "castTimeReductionBonus"), castTimeReductionBonus, -10.0, 10.0);
-            spellPowerMultiplier = overlayDouble(file, List.of("spells", "spellPowerMultiplier"), spellPowerMultiplier, 0.0, 10.0);
-            buffDurationMultiplier = overlayDouble(file, List.of("spells", "buffDurationMultiplier"), buffDurationMultiplier, 0.0, 10.0);
-            buffDurationNamespaces = namespaceSet(overlayStrings(file, List.of("spells", "buffDurationNamespaces"), List.copyOf(buffDurationNamespaces)));
-            spellCastingDisabledDimensions = overlayStrings(file, List.of("restrictions", "spellCastingDisabledDimensions"), spellCastingDisabledDimensions);
-            maxSpellRarity = normalizeRarity(overlayString(file, List.of("restrictions", "maxSpellRarity"), maxSpellRarity));
-            inscriptionBlacklist = overlayStrings(file, List.of("restrictions", "inscriptionBlacklist"), inscriptionBlacklist);
-            blackholeImmunity = overlayStrings(file, List.of("blackhole", "blackholeImmunity"), blackholeImmunity);
-            summonVexHpMultiplier = overlayDouble(file, List.of("summons", "summonVexHpMultiplier"), summonVexHpMultiplier, 0.0, 10.0);
-            summonVexDamageMultiplier = overlayDouble(file, List.of("summons", "summonVexDamageMultiplier"), summonVexDamageMultiplier, 0.0, 10.0);
-            raiseDeadHpMultiplier = overlayDouble(file, List.of("summons", "raiseDeadHpMultiplier"), raiseDeadHpMultiplier, 0.0, 10.0);
-            raiseDeadDamageMultiplier = overlayDouble(file, List.of("summons", "raiseDeadDamageMultiplier"), raiseDeadDamageMultiplier, 0.0, 10.0);
-            summonPolarBearHpMultiplier = overlayDouble(file, List.of("summons", "summonPolarBearHpMultiplier"), summonPolarBearHpMultiplier, 0.0, 10.0);
-            summonPolarBearDamageMultiplier = overlayDouble(file, List.of("summons", "summonPolarBearDamageMultiplier"), summonPolarBearDamageMultiplier, 0.0, 10.0);
-            summonHorseHpMultiplier = overlayDouble(file, List.of("summons", "summonHorseHpMultiplier"), summonHorseHpMultiplier, 0.0, 10.0);
-            summonSwordsDamageMultiplier = overlayDouble(file, List.of("summons", "summonSwordsDamageMultiplier"), summonSwordsDamageMultiplier, 0.0, 10.0);
+            baseManaRegenPercent = overlayDouble(file, List.of(Config.Keys.SECTION_MANA, Config.Keys.MANA_BASE_REGEN_PERCENT), baseManaRegenPercent, -1.0, 100.0);
+            startingMaxMana = overlayInt(file, List.of(Config.Keys.SECTION_MANA, Config.Keys.MANA_STARTING_MAX), startingMaxMana, -1, 100000);
+            disableManaRegen = overlayBoolean(file, List.of(Config.Keys.SECTION_MANA, Config.Keys.MANA_DISABLE_REGEN), disableManaRegen);
+            cooldownReductionBonus = overlayDouble(file, List.of(Config.Keys.SECTION_COOLDOWN, Config.Keys.COOLDOWN_REDUCTION_BONUS), cooldownReductionBonus, -10.0, 10.0);
+            castTimeReductionBonus = overlayDouble(file, List.of(Config.Keys.SECTION_COOLDOWN, Config.Keys.CAST_TIME_REDUCTION_BONUS), castTimeReductionBonus, -10.0, 10.0);
+            spellPowerMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SPELLS, Config.Keys.SPELL_POWER_MULTIPLIER), spellPowerMultiplier, 0.0, 10.0);
+            buffDurationMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SPELLS, Config.Keys.BUFF_DURATION_MULTIPLIER), buffDurationMultiplier, 0.0, 10.0);
+            buffDurationNamespaces = namespaceSet(overlayStrings(file, List.of(Config.Keys.SECTION_SPELLS, Config.Keys.BUFF_DURATION_NAMESPACES), List.copyOf(buffDurationNamespaces)));
+            spellCastingDisabledDimensions = overlayStrings(file, List.of(Config.Keys.SECTION_RESTRICTIONS, Config.Keys.SPELL_CASTING_DISABLED_DIMENSIONS), spellCastingDisabledDimensions);
+            maxSpellRarity = normalizeRarity(overlayString(file, List.of(Config.Keys.SECTION_RESTRICTIONS, Config.Keys.MAX_SPELL_RARITY), maxSpellRarity));
+            inscriptionBlacklist = overlayStrings(file, List.of(Config.Keys.SECTION_RESTRICTIONS, Config.Keys.INSCRIPTION_BLACKLIST), inscriptionBlacklist);
+            blackholeImmunity = overlayStrings(file, List.of(Config.Keys.SECTION_BLACKHOLE, Config.Keys.BLACKHOLE_IMMUNITY), blackholeImmunity);
+            spellDamageMultipliersRaw = overlayStrings(file, List.of(Config.Keys.SECTION_PER_SPELL, Config.Keys.PER_SPELL_DAMAGE), spellDamageMultipliersRaw);
+            spellCooldownMultipliersRaw = overlayStrings(file, List.of(Config.Keys.SECTION_PER_SPELL, Config.Keys.PER_SPELL_COOLDOWN), spellCooldownMultipliersRaw);
+            spellManaCostMultipliersRaw = overlayStrings(file, List.of(Config.Keys.SECTION_PER_SPELL, Config.Keys.PER_SPELL_MANA_COST), spellManaCostMultipliersRaw);
+            summonVexHpMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_VEX_HP), summonVexHpMultiplier, 0.0, 10.0);
+            summonVexDamageMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_VEX_DAMAGE), summonVexDamageMultiplier, 0.0, 10.0);
+            raiseDeadHpMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.RAISE_DEAD_HP), raiseDeadHpMultiplier, 0.0, 10.0);
+            raiseDeadDamageMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.RAISE_DEAD_DAMAGE), raiseDeadDamageMultiplier, 0.0, 10.0);
+            summonPolarBearHpMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_POLAR_BEAR_HP), summonPolarBearHpMultiplier, 0.0, 10.0);
+            summonPolarBearDamageMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_POLAR_BEAR_DAMAGE), summonPolarBearDamageMultiplier, 0.0, 10.0);
+            summonHorseHpMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_HORSE_HP), summonHorseHpMultiplier, 0.0, 10.0);
+            summonSwordsDamageMultiplier = overlayDouble(file, List.of(Config.Keys.SECTION_SUMMONS, Config.Keys.SUMMON_SWORDS_DAMAGE), summonSwordsDamageMultiplier, 0.0, 10.0);
             logger.info("applied per-world config override from {}", overrideFile);
         } catch (Exception parseFailed) {
             applyGlobal();
@@ -128,6 +140,9 @@ public final class RuntimeConfig {
                 summonPolarBearHpMultiplier, summonPolarBearDamageMultiplier,
                 summonHorseHpMultiplier, summonSwordsDamageMultiplier);
         blackholeImmunityMap = parseImmunityList(blackholeImmunity);
+        spellDamageMultipliers = parseMultiplierList(Config.Keys.PER_SPELL_DAMAGE, spellDamageMultipliersRaw);
+        spellCooldownMultipliers = parseMultiplierList(Config.Keys.PER_SPELL_COOLDOWN, spellCooldownMultipliersRaw);
+        spellManaCostMultipliers = parseMultiplierList(Config.Keys.PER_SPELL_MANA_COST, spellManaCostMultipliersRaw);
     }
 
     private static double clamp(double value, double min, double max) {
@@ -260,6 +275,37 @@ public final class RuntimeConfig {
             }
             double clamped = Math.max(0.0, Math.min(1.0, strength));
             result.put(entityId, clamped);
+        }
+        return Map.copyOf(result);
+    }
+
+    private static Map<String, Double> parseMultiplierList(String label, List<String> raw) {
+        if (raw.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Double> result = new HashMap<>();
+        for (String entry : raw) {
+            // The multiplier comes after the last colon because spell ids already contain one.
+            int separator = entry.lastIndexOf(':');
+            if (separator < 0) {
+                logger.warn("{} entry '{}' missing ':multiplier' suffix, skipping", label, entry);
+                continue;
+            }
+            String idPart = entry.substring(0, separator);
+            String multiplierPart = entry.substring(separator + 1);
+            ResourceLocation spellId = ResourceLocation.tryParse(idPart);
+            if (spellId == null) {
+                logger.warn("{} entry '{}' has invalid spell id '{}', skipping", label, entry, idPart);
+                continue;
+            }
+            double multiplier;
+            try {
+                multiplier = Double.parseDouble(multiplierPart);
+            } catch (NumberFormatException notANumber) {
+                logger.warn("{} entry '{}' has non-numeric multiplier '{}', skipping", label, entry, multiplierPart);
+                continue;
+            }
+            result.put(spellId.toString(), clamp(multiplier, 0.0, 10.0));
         }
         return Map.copyOf(result);
     }

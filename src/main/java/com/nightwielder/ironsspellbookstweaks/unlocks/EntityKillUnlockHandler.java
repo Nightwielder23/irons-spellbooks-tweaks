@@ -1,8 +1,9 @@
-// Fires entity_kill unlocks when a player kills a matching entity. Hooks LivingDeathEvent and resolves the killer through DamageSource.
+// Counts player kills of entity types that some unlock references, then re-evaluates unlocks. Resolves the killer through DamageSource.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
-import java.util.List;
+import com.nightwielder.ironsspellbookstweaks.capability.PlayerProgressProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -30,12 +31,15 @@ public class EntityKillUnlockHandler {
         if (victimTypeId == null) {
             return;
         }
-        List<UnlockDefinition> matchingUnlocks = UnlockManager.getByEntityKill(victimTypeId);
-        if (matchingUnlocks.isEmpty()) {
+        if (!UnlockEvaluator.referencesEntityType(victimTypeId)) {
             return;
         }
-        for (UnlockDefinition unlock : matchingUnlocks) {
-            UnlockApplicator.apply(player, unlock);
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
         }
+        serverPlayer.getCapability(PlayerProgressProvider.PLAYER_PROGRESS).ifPresent(progress -> {
+            progress.incrementKillCount(victimTypeId);
+            UnlockEvaluator.reevaluate(serverPlayer, progress, victimTypeId);
+        });
     }
 }

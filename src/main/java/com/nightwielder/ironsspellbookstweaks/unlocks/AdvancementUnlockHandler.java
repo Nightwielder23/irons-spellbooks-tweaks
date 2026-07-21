@@ -1,8 +1,6 @@
-// Routes advancement-earned events to any unlocks indexed against that advancement id.
+// Re-evaluates unlocks for a player whenever they earn an advancement.
 package com.nightwielder.ironsspellbookstweaks.unlocks;
 
-import java.util.List;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -15,13 +13,6 @@ public class AdvancementUnlockHandler {
         if (player.level().isClientSide) {
             return;
         }
-        ResourceLocation advancementId = event.getAdvancement().getId();
-        List<UnlockDefinition> matchingUnlocks = UnlockManager.getByAdvancement(advancementId);
-        if (matchingUnlocks.isEmpty()) {
-            return;
-        }
-        for (UnlockDefinition unlock : matchingUnlocks) {
-            UnlockApplicator.apply(player, unlock);
-        }
+        UnlockEvaluator.reevaluate(player, event.getAdvancement().getId());
     }
 }
